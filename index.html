@@ -1,1116 +1,369 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Śpiewnik Organowy</title>
-
-  <!-- Cache-Control -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-
-  <!-- PWA Setup -->
-  <link rel="manifest" href="manifest.json?v=7" />
-  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-  <link rel="apple-touch-icon" href="/icon.svg" />
-  <meta name="theme-color" content="#0a0a0a" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Firebase SDK (v10 Modular) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyB4jsdsV2oV9KEXCyV4V15GbYviUZj-KcQ",
-      authDomain: "organista-3ba7a.firebaseapp.com",
-      projectId: "organista-3ba7a",
-      storageBucket: "organista-3ba7a.firebasestorage.app",
-      messagingSenderId: "567295688412",
-      appId: "1:567295688412:web:e06a665bf6091a9d127e19"
-    };
-
-    try {
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-      window.db = db;
-      window.useFirestore = true;
-      console.log("Połączono z bazą Firestore (organista-3ba7a)!");
-    } catch(e) {
-      console.error("Błąd połączenia z Firestore:", e);
-    }
-  </script>
-
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-      background-color: #0a0a0a;
+      background-color: #050505;
       color: #e5e5e5;
+      font-family: 'Inter', sans-serif;
       min-height: 100vh;
-      padding: 12px;
-      padding-bottom: 80px;
-    }
-
-    header {
-      position: sticky;
-      top: 0;
-      background-color: rgba(10, 10, 10, 0.96);
-      backdrop-filter: blur(10px);
-      padding-top: 8px;
-      padding-bottom: 12px;
-      z-index: 20;
-      border-bottom: 1px solid #262626;
-      margin-bottom: 16px;
-    }
-
-    .header-top {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+    }
+
+    /* NAGŁÓWEK GŁÓWNY */
+    header {
+      display: flex;
       align-items: center;
-      margin-bottom: 12px;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background-color: #0a0a0a;
+      border-bottom: 1px solid #1f1f1f;
     }
 
-    h1 {
+    .header-title {
       font-family: 'Cinzel', serif;
-      font-size: 1.2rem;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      color: #f5f5f5;
-      text-transform: uppercase;
       text-align: center;
-      flex: 1;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      line-height: 1.2;
+      color: #ffffff;
     }
 
-    .icon-btn {
-      background-color: #141414;
-      border: 1px solid #333333;
-      color: #e5e5e5;
+    .top-btn {
+      background: #141414;
+      border: 1px solid #262626;
+      color: #d4d4d8;
       padding: 6px 12px;
       border-radius: 6px;
       font-size: 0.8rem;
       cursor: pointer;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-    .icon-btn:active {
-      background-color: #262626;
-      transform: scale(0.95);
-    }
-    .icon-btn.admin-active {
-      background-color: #22c55e;
-      color: #000;
-      font-weight: 700;
-      border-color: #22c55e;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
-    /* Nawigacja po Podstronach */
+    /* NAWIGACJA GÓRNA (KARTY) */
     .nav-tabs {
       display: flex;
       gap: 4px;
-      margin-bottom: 12px;
-      background-color: #141414;
-      padding: 4px;
-      border-radius: 8px;
-      border: 1px solid #262626;
+      padding: 8px 12px;
+      background-color: #0d0d0d;
+      border-bottom: 1px solid #1a1a1a;
       overflow-x: auto;
-      scrollbar-width: none;
     }
-    .nav-tabs::-webkit-scrollbar { display: none; }
 
     .tab-btn {
-      flex: 1;
-      background: none;
+      background: transparent;
       border: none;
-      color: #888888;
-      padding: 10px 6px;
-      font-size: 0.76rem;
-      font-weight: 600;
+      color: #a1a1aa;
+      padding: 8px 12px;
+      font-size: 0.85rem;
       border-radius: 6px;
       cursor: pointer;
-      text-align: center;
       white-space: nowrap;
-    }
-    .tab-btn.active {
-      background-color: #262626;
-      color: #ffffff;
-    }
-
-    .search-container {
-      margin-bottom: 10px;
-    }
-    .search-bar {
-      width: 100%;
-      padding: 11px 14px;
-      font-size: 0.95rem;
-      border-radius: 6px;
-      border: 1px solid #333333;
-      background-color: #141414;
-      color: #ffffff;
-      outline: none;
-    }
-    .search-bar:focus {
-      border-color: #d4d4d4;
-    }
-
-    .categories-bar {
       display: flex;
+      align-items: center;
       gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      scrollbar-width: none;
-    }
-    .categories-bar::-webkit-scrollbar { display: none; }
-
-    .cat-btn {
-      background-color: #141414;
-      color: #a3a3a3;
-      border: 1px solid #262626;
-      padding: 5px 12px;
-      border-radius: 16px;
-      font-size: 0.78rem;
-      white-space: nowrap;
-      cursor: pointer;
-    }
-    .cat-btn.active {
-      background-color: #f5f5f5;
-      color: #0a0a0a;
-      font-weight: 700;
     }
 
-    .section-view { display: none; }
-    .section-view.active { display: block; }
-
-    /* Dashboard */
-    .dashboard-hero {
-      background: linear-gradient(180deg, #181818 0%, #0d0d0d 100%);
-      border: 1px solid #262626;
-      border-radius: 12px;
-      padding: 24px 16px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .dashboard-hero h2 {
-      font-family: 'Cinzel', serif;
-      font-size: 1.4rem;
+    .tab-btn.active {
+      background-color: #1f1f23;
       color: #ffffff;
-      margin-bottom: 8px;
-    }
-    .dashboard-hero p {
-      font-size: 0.88rem;
-      color: #a3a3a3;
-      margin-bottom: 20px;
+      font-weight: 500;
     }
 
-    .quick-actions-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 24px;
+    /* GŁÓWNA ZAWARTOŚĆ */
+    main {
+      flex: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
     }
-    @media(min-width: 600px) {
-      .quick-actions-grid { grid-template-columns: repeat(4, 1fr); }
+
+    .section-view {
+      display: none;
+      height: 100%;
     }
-    .action-card {
-      background-color: #141414;
+
+    .section-view.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* PRZYCISKI DZIŚ / NIEDZIELA */
+    .day-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .sub-btn {
+      flex: 1;
+      padding: 10px;
+      background-color: #121212;
       border: 1px solid #262626;
-      border-radius: 10px;
-      padding: 16px;
-      text-align: center;
+      color: #a1a1aa;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
-    .action-card:active {
-      transform: scale(0.97);
-      background-color: #1f1f1f;
-    }
-    .action-card .icon {
-      font-size: 1.8rem;
-      margin-bottom: 8px;
-    }
-    .action-card .title {
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: #ffffff;
-    }
 
-    /* Grid Pieśni */
-    .song-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 12px;
-    }
-    @media (min-width: 600px) {
-      .song-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 16px;
-      }
-    }
-
-    .song-card {
-      background-color: #141414;
-      border: 1px solid #262626;
-      border-radius: 8px;
-      overflow: hidden;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    .card-img-wrapper {
-      width: 100%;
-      height: 160px;
-      background-color: #000;
-      position: relative;
-    }
-    .song-card img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .card-actions-top {
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      right: 6px;
-      display: flex;
-      justify-content: space-between;
-      z-index: 5;
-    }
-    .add-rep-btn {
-      background: rgba(10,10,10,0.88);
-      border: 1px solid #404040;
-      color: #fff;
-      border-radius: 4px;
-      padding: 4px 8px;
-      font-size: 0.7rem;
+    .sub-btn.active {
+      background-color: #f4f4f5;
+      color: #09090b;
+      border-color: #f4f4f5;
       font-weight: 600;
     }
-    /* Ukryta edycja bez zalogowania admina */
-    .edit-song-btn {
-      display: none;
-      background: rgba(10,10,10,0.88);
-      border: 1px solid #404040;
-      color: #fff;
-      border-radius: 4px;
-      padding: 4px 8px;
-      font-size: 0.75rem;
-      cursor: pointer;
-    }
-    body.is-admin .edit-song-btn {
-      display: inline-block;
-    }
 
-    .song-info {
-      padding: 12px 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 6px;
+    /* KONTENER NA CZYTANIA (WYCZYSZCZONY TEXT) */
+    .readings-container {
+      flex: 1;
       background-color: #121212;
+      border: 1px solid #222222;
+      border-radius: 8px;
+      padding: 16px;
+      overflow-y: auto;
+      max-height: calc(100vh - 210px);
     }
 
-    .song-title-center {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.05rem;
-      font-weight: 800;
+    /* CZYSZCZENIE I FORMATOWANIE POBRANEGO HTML-A */
+    .parsed-readings h1, 
+    .parsed-readings h2, 
+    .parsed-readings h3, 
+    .parsed-readings h4 {
+      font-family: 'Cinzel', serif;
+      color: #f59e0b;
+      margin: 18px 0 8px 0;
+      font-size: 1.1rem;
+    }
+
+    .parsed-readings p {
+      line-height: 1.6;
+      font-size: 0.95rem;
+      color: #d4d4d8;
+      margin-bottom: 12px;
+    }
+
+    .parsed-readings strong {
       color: #ffffff;
-      line-height: 1.3;
-      word-break: break-word;
     }
 
-    .song-meta-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .badge-category {
-      background-color: #1f1f1f;
-      border: 1px solid #333333;
-      color: #a3a3a3;
-      font-size: 0.68rem;
-      font-weight: 600;
-      padding: 2px 7px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .badge-slide {
-      background-color: #f5f5f5;
-      color: #0a0a0a;
-      font-size: 0.68rem;
-      font-weight: 800;
-      padding: 2px 7px;
-      border-radius: 4px;
-      letter-spacing: 0.5px;
-    }
-
-    /* Modale */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background-color: rgba(0, 0, 0, 0.95);
-      z-index: 100;
-      flex-direction: column;
-    }
-    .modal.active { display: flex; }
-
-    .modal-header {
-      padding: 14px 16px;
-      background-color: #0a0a0a;
-      border-bottom: 1px solid #262626;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-center-info {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    .loading-box {
       text-align: center;
-      flex: 1;
-      padding: 0 10px;
-    }
-
-    .modal-title-lg {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: #ffffff;
-    }
-
-    .modal-body {
-      flex: 1;
-      overflow: auto;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 8px;
-    }
-    .modal-body img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      background-color: #fff;
-      border-radius: 4px;
-    }
-
-    .edit-modal-content {
-      background-color: #141414;
-      border: 1px solid #262626;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 400px;
-      margin: auto;
-      padding: 20px;
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-    .form-group label {
-      display: block;
-      font-size: 0.8rem;
-      color: #a3a3a3;
-      margin-bottom: 6px;
-    }
-    .form-control {
-      width: 100%;
-      padding: 10px;
-      background-color: #0a0a0a;
-      border: 1px solid #333333;
-      color: #fff;
-      border-radius: 6px;
+      padding: 40px 10px;
+      color: #71717a;
       font-size: 0.9rem;
     }
 
-    .btn-primary {
-      background-color: #f5f5f5;
-      color: #0a0a0a;
-      border: none;
-      padding: 10px 16px;
-      font-weight: 700;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    .list-item {
-      background-color: #141414;
-      border: 1px solid #262626;
-      border-radius: 6px;
-      padding: 12px;
-      margin-bottom: 8px;
+    /* PASEK DOLNY (Dla zachowania pełnego wyglądu Twojej aplikacji) */
+    footer {
       display: flex;
-      justify-content: space-between;
+      justify-content: space-around;
       align-items: center;
+      background-color: #0a0a0a;
+      border-top: 1px solid #1f1f1f;
+      padding: 8px 0;
     }
 
-    .admin-card {
-      background-color: #141414;
-      border: 1px solid #262626;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 16px;
+    .footer-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 0.7rem;
+      color: #71717a;
+      text-decoration: none;
+      gap: 2px;
     }
 
-    .status-msg {
-      text-align: center;
-      padding: 40px 16px;
-      color: #737373;
-      font-family: 'Cinzel', serif;
-    }
-
-    /* Style dla Podstrony Czytań */
-    .readings-container {
-      width: 100%;
-      height: 72vh;
-      border: 1px solid #262626;
-      border-radius: 8px;
-      overflow: hidden;
-      background-color: #141414;
-    }
-    .readings-container iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      filter: invert(0.9) hue-rotate(180deg);
+    .footer-item.active {
+      color: #3b82f6;
     }
   </style>
 </head>
 <body>
 
+  <!-- NAGŁÓWEK -->
   <header>
-    <div class="header-top">
-      <button class="icon-btn" onclick="forceRefresh()">↻ Refresh</button>
-      <h1>Śpiewnik Organowy</h1>
-      <button class="icon-btn" id="adminAuthBtn" onclick="handleAdminToggle()">🔑 Zaloguj</button>
+    <button class="top-btn" onclick="location.reload()">↺ Refresh</button>
+    <div class="header-title">
+      ŚPIEWNIK<br>ORGANOWY
     </div>
-
-    <!-- Nawigacja Po Podstronach -->
-    <div class="nav-tabs">
-      <button class="tab-btn active" id="tabHome" onclick="switchView('home')">🏠 Główna</button>
-      <button class="tab-btn" id="tabBaza" onclick="switchView('baza')">🎼 Baza</button>
-      <button class="tab-btn" id="tabRepertuar" onclick="switchView('repertuar')">📋 Repertuar (<span id="repCount">0</span>)</button>
-      <button class="tab-btn" id="tabCzytania" onclick="switchView('czytania')">📖 Czytania</button>
-      <button class="tab-btn" id="tabArchiwum" onclick="switchView('archiwum')">📚 Archiwum</button>
-    </div>
-
-    <div id="bazaHeaderControls" style="display:none;">
-      <div class="search-container">
-        <input type="text" id="searchInput" class="search-bar" placeholder="Szukaj pieśni lub slajdu..." />
-      </div>
-      <div class="categories-bar" id="categoriesBar"></div>
-    </div>
+    <button class="top-btn">🔑 Zaloguj</button>
   </header>
 
+  <!-- KARTY NAWIGACYJNE -->
+  <nav class="nav-tabs">
+    <button class="tab-btn" onclick="switchTab('glowna')">🏠 Główna</button>
+    <button class="tab-btn" onclick="switchTab('baza')">🎼 Baza</button>
+    <button class="tab-btn" onclick="switchTab('repertuar')">📋 Repertuar (0)</button>
+    <button class="tab-btn active" id="tabCzytania" onclick="switchTab('czytania')">📖 Czytania</button>
+  </nav>
+
+  <!-- TREŚĆ GŁÓWNA -->
   <main>
-    <div id="status" class="status-msg">Ładowanie bazy i synchronizacja...</div>
 
-    <!-- PODSTRONA 1: STRONA GŁÓWNA -->
-    <div id="viewHome" class="section-view active">
-      <div class="dashboard-hero">
-        <h2>Laudate Dominum</h2>
-        <p>Interaktywny śpiewnik i zarządca repertuaru liturgicznego</p>
-        <button class="btn-primary" onclick="switchView('repertuar')">Otwórz Bieżący Repertuar (<span id="dashRepCount">0</span>)</button>
-      </div>
-
-      <h3 style="font-family:'Cinzel',serif; font-size:1rem; margin-bottom:12px; color:#a3a3a3;">Na skróty</h3>
-      <div class="quick-actions-grid">
-        <div class="action-card" onclick="switchView('baza')">
-          <div class="icon">🎼</div>
-          <div class="title">Baza Pieśni</div>
-        </div>
-        <div class="action-card" onclick="switchView('repertuar')">
-          <div class="icon">📋</div>
-          <div class="title">Repertuar</div>
-        </div>
-        <div class="action-card" onclick="switchView('czytania')">
-          <div class="icon">📖</div>
-          <div class="title">Czytania</div>
-        </div>
-        <div class="action-card" onclick="switchView('archiwum')">
-          <div class="icon">📚</div>
-          <div class="title">Archiwum</div>
-        </div>
-      </div>
+    <!-- WIDOK: GŁÓWNA (PLACEHOLDER) -->
+    <div id="viewGlowna" class="section-view">
+      <div style="padding:20px; text-align:center; color:#666;">Widok Główny</div>
     </div>
 
-    <!-- PODSTRONA 2: BAZA PIEŚNI -->
+    <!-- WIDOK: BAZA (PLACEHOLDER) -->
     <div id="viewBaza" class="section-view">
-      <div id="songGrid" class="song-grid"></div>
+      <div style="padding:20px; text-align:center; color:#666;">Baza Pieśni</div>
     </div>
 
-    <!-- PODSTRONA 3: BIEŻĄCY REPERTUAR -->
+    <!-- WIDOK: REPERTUAR (PLACEHOLDER) -->
     <div id="viewRepertuar" class="section-view">
-      <div style="display:flex; gap:10px; margin-bottom:12px;">
-        <button class="icon-btn" style="flex:1;" onclick="clearCurrentRepertuar()">Wyczyść zestaw</button>
-        <button class="icon-btn" style="flex:1; background:#262626;" onclick="saveRepertuarToArchiwum()">💾 Zapisz do archiwum</button>
-      </div>
-      <div id="repertuarList"></div>
+      <div style="padding:20px; text-align:center; color:#666;">Twój Repertuar</div>
     </div>
 
-    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE -->
-    <div id="viewCzytania" class="section-view">
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <button class="icon-btn active" id="btnCzytaniaDzis" style="flex:1;" onclick="loadReadings('dzis')">📅 Dzisiejsze Czytania</button>
-        <button class="icon-btn" id="btnCzytaniaNiedziela" style="flex:1;" onclick="loadReadings('niedziela')">⛪ Najbliższa Niedziela</button>
+    <!-- WIDOK: CZYTANIA (WERSJA I - DOMPARSER) -->
+    <div id="viewCzytania" class="section-view active">
+      <div class="day-selector">
+        <button class="sub-btn active" id="btnCzytaniaDzis" onclick="loadReadings('dzis')">📅 Dzisiejsze Czytania</button>
+        <button class="sub-btn" id="btnCzytaniaNiedziela" onclick="loadReadings('niedziela')">⛪ Najbliższa Niedziela</button>
       </div>
-      <div class="readings-container">
-        <iframe id="readingsIframe" src="about:blank"></iframe>
+
+      <div class="readings-container" id="readingsContainer">
+        <div id="readingsContent" class="loading-box">Wybierz dzień, aby pobrać czytania...</div>
       </div>
     </div>
 
-    <!-- PODSTRONA 5: ARCHIWUM REPERTUARÓW -->
-    <div id="viewArchiwum" class="section-view">
-      <div id="archiwumList"></div>
-    </div>
   </main>
 
-  <!-- MODAL: PODGLĄD NUT -->
-  <div id="imageModal" class="modal">
-    <div class="modal-header">
-      <div class="modal-center-info">
-        <div id="modalTitle" class="modal-title-lg"></div>
-        <div class="song-meta-row" style="margin-top:4px;">
-          <span id="modalCategory" class="badge-category"></span>
-          <span id="modalSlide" class="badge-slide"></span>
-        </div>
-      </div>
-      <button class="icon-btn" onclick="closeModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <img id="modalImage" src="" alt="Nuty" />
-    </div>
-  </div>
+  <!-- PASEK DOLNY -->
+  <footer>
+    <a href="#" class="footer-item">
+      <span>🐟</span>
+      <span>NIEZBĘDNIK KATOLIKA</span>
+    </a>
+    <a href="#" class="footer-item">
+      <span>☰</span>
+      <span>Menu</span>
+    </a>
+    <a href="#" class="footer-item active">
+      <span>📖</span>
+      <span>Liturgia</span>
+    </a>
+    <a href="#" class="footer-item">
+      <span>🪙</span>
+      <span>Wspieram</span>
+    </a>
+    <a href="#" class="footer-item">
+      <span>🇳</span>
+      <span>niedziela.pl</span>
+    </a>
+  </footer>
 
-  <!-- MODAL: EDYCJA PIEŚNI -->
-  <div id="editSongModal" class="modal">
-    <div class="modal-header">
-      <strong style="color:#fff;">Edycja Pieśni (Admin)</strong>
-      <button class="icon-btn" onclick="closeEditModal()">✕</button>
-    </div>
-    <div style="flex:1; display:flex; align-items:center; justify-content:center;">
-      <div class="edit-modal-content">
-        <h3 id="editModalSongTitle" style="font-family:'Playfair Display',serif; color:#fff; margin-bottom:16px; text-align:center;"></h3>
-        
-        <div class="form-group">
-          <label>Wybierz Kategorię:</label>
-          <select id="editCatSelect" class="form-control" onchange="handleCatSelectChange()">
-          </select>
-        </div>
+  <script>
+    // PRZEŁĄCZANIE KART GŁÓWNYCH
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.section-view').forEach(view => view.classList.remove('active'));
 
-        <div class="form-group" id="customCatGroup" style="display:none;">
-          <label>Wpisz własną nazwę nowej kategorii:</label>
-          <input type="text" id="customCatInput" class="form-control" placeholder="np. Okolicznościowe..." />
-        </div>
-
-        <button class="btn-primary" onclick="saveSongEdit()">Zapisz Zmiany w Bazie</button>
-      </div>
-    </div>
-  </div>
-
-  <script type="module">
-    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const FOLDER_ID = '1W-9DISbSkwwwOUBXmiBIgcIKbdZqIHA-';
-    const API_KEY = 'AIzaSyDM3V9xJhY4AO2V3MaFN6MZIufi0OqGOCk';
-
-    let allSongs = [];
-    let currentCategory = 'Wszystkie';
-    let editingSongId = null;
-    let isAdminLoggedIn = false;
-
-    let customCategories = ['Adwent', 'Boże Narodzenie', 'Wielki Post', 'Wielkanoc', 'Maryjne', 'Ogólne'];
-    let songCategoryMap = {};
-    let currentRepertuar = JSON.parse(localStorage.getItem('currentRepertuar')) || [];
-    let archiwumRepertuarow = [];
-
-    // Firestore Sync
-    async function loadCloudData() {
-      if (!window.useFirestore || !window.db) return;
-      try {
-        const docRef = doc(window.db, "spiewnik", "config");
-        const snap = await getDoc(docRef);
-        if (snap.exists()) {
-          const data = snap.data();
-          if (data.categories) customCategories = data.categories;
-          if (data.songCategoryMap) songCategoryMap = data.songCategoryMap;
-          if (data.archiwum) archiwumRepertuarow = data.archiwum;
-        }
-      } catch (e) {
-        console.error("Błąd Firestore:", e);
+      if (tabName === 'glowna') document.getElementById('viewGlowna').classList.add('active');
+      if (tabName === 'baza') document.getElementById('viewBaza').classList.add('active');
+      if (tabName === 'repertuar') document.getElementById('viewRepertuar').classList.add('active');
+      if (tabName === 'czytania') {
+        document.getElementById('viewCzytania').classList.add('active');
+        document.getElementById('tabCzytania').classList.add('active');
       }
     }
 
-    async function saveCloudData() {
-      if (!window.useFirestore || !window.db) return;
-      try {
-        const docRef = doc(window.db, "spiewnik", "config");
-        await setDoc(docRef, {
-          categories: customCategories,
-          songCategoryMap: songCategoryMap,
-          archiwum: archiwumRepertuarow
-        });
-      } catch (e) {
-        console.error("Błąd zapisu Firestore:", e);
-      }
-    }
-
-    // LOGOWANIE / WYLOGOWANIE ADMINA
-    window.handleAdminToggle = function() {
-      if (isAdminLoggedIn) {
-        isAdminLoggedIn = false;
-        document.body.classList.remove('is-admin');
-        const btn = document.getElementById('adminAuthBtn');
-        btn.innerText = '🔑 Zaloguj';
-        btn.classList.remove('admin-active');
-        alert('Wylogowano z trybu administratora.');
-      } else {
-        const pass = prompt('Podaj hasło administratora:');
-        if (pass === '0410') {
-          isAdminLoggedIn = true;
-          document.body.classList.add('is-admin');
-          const btn = document.getElementById('adminAuthBtn');
-          btn.innerText = '🔓 Admin (Wyloguj)';
-          btn.classList.add('admin-active');
-          alert('Zalogowano jako Administrator! Funkcje edycji są teraz widoczne.');
-        } else if (pass !== null) {
-          alert('Niepoprawne hasło!');
-        }
-      }
-    }
-
-    window.loadSongs = async function() {
-      const statusEl = document.getElementById('status');
-      statusEl.style.display = 'block';
-
-      await loadCloudData();
-
-      const cacheBuster = `&_cb=${Date.now()}`;
-      const query = `'${FOLDER_ID}' in parents and trashed = false and (mimeType contains 'image/')`;
-      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,thumbnailLink)&pageSize=500&key=${API_KEY}${cacheBuster}`;
-
-      try {
-        const response = await fetch(url, { cache: 'no-store' });
-        if (!response.ok) throw new Error('Błąd połączenia z Google Drive');
-
-        const data = await response.json();
-        const files = data.files || [];
-
-        allSongs = files.map(file => parseFileData(file));
-        allSongs.sort((a, b) => a.cleanTitle.localeCompare(b.cleanTitle, 'pl'));
-
-        statusEl.style.display = 'none';
-        renderCategoriesBar();
-        renderSongs();
-        updateRepertuarBadge();
-      } catch (err) {
-        statusEl.className = 'status-msg';
-        statusEl.innerText = `Błąd: ${err.message}`;
-      }
-    }
-
-    function parseFileData(file) {
-      let rawName = file.name.replace(/\.(jpg|jpeg|png|webp)$/i, '').trim();
-
-      let slideNum = null;
-      const slideMatch = rawName.match(/\((\d+)\)/) || rawName.match(/[-_]\s*(\d+)$/);
-      if (slideMatch) {
-        slideNum = slideMatch[1];
-        rawName = rawName.replace(slideMatch[0], '').trim();
-      }
-
-      let category = songCategoryMap[file.id];
-      if (!category) {
-        const lower = file.name.toLowerCase();
-        if (lower.includes('adwent')) category = 'Adwent';
-        else if (lower.includes('kolęd') || lower.includes('boże narodzenie')) category = 'Boże Narodzenie';
-        else if (lower.includes('post') || lower.includes('krzyż')) category = 'Wielki Post';
-        else if (lower.includes('wielkanoc')) category = 'Wielkanoc';
-        else if (lower.includes('maryj')) category = 'Maryjne';
-        else category = 'Ogólne';
-      }
-
-      return {
-        id: file.id,
-        cleanTitle: rawName,
-        slideNumber: slideNum,
-        category: category
-      };
-    }
-
-    window.renderSongs = function() {
-      const gridEl = document.getElementById('songGrid');
-      gridEl.innerHTML = '';
-
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-
-      const filtered = allSongs.filter(song => {
-        const matchesCategory = (currentCategory === 'Wszystkie') || (song.category === currentCategory);
-        const matchesSearch = song.cleanTitle.toLowerCase().includes(searchTerm) || 
-                              (song.slideNumber && song.slideNumber.includes(searchTerm));
-        return matchesCategory && matchesSearch;
-      });
-
-      if (filtered.length === 0) {
-        gridEl.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:#525252;">Brak pieśni spełniających kryteria.</div>';
-        return;
-      }
-
-      const timestamp = Date.now();
-      filtered.forEach(song => {
-        const thumbUrl = `https://lh3.googleusercontent.com/d/${song.id}=s400?v=${timestamp}`;
-        const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000?v=${timestamp}`;
-
-        const card = document.createElement('div');
-        card.className = 'song-card';
-
-        const inRep = currentRepertuar.some(s => s.id === song.id);
-
-        card.innerHTML = `
-          <div class="card-img-wrapper" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')">
-            <img src="${thumbUrl}" alt="${song.cleanTitle}" loading="lazy" />
-            <div class="card-actions-top">
-              <button class="add-rep-btn" onclick="event.stopPropagation(); toggleRepertuar('${song.id}')">
-                ${inRep ? '✓ W zestawie' : '+ Dodaj'}
-              </button>
-              <button class="edit-song-btn" onclick="event.stopPropagation(); openEditModal('${song.id}')">✏️</button>
-            </div>
-          </div>
-          <div class="song-info" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')">
-            <div class="song-title-center">${song.cleanTitle}</div>
-            <div class="song-meta-row">
-              <span class="badge-category">${song.category}</span>
-              ${song.slideNumber ? `<span class="badge-slide">Slajd #${song.slideNumber}</span>` : ''}
-            </div>
-          </div>
-        `;
-
-        gridEl.appendChild(card);
-      });
-    }
-
-    function renderCategoriesBar() {
-      const bar = document.getElementById('categoriesBar');
-      let html = `<button class="cat-btn ${currentCategory === 'Wszystkie' ? 'active' : ''}" onclick="filterCategory('Wszystkie')">Wszystkie</button>`;
-      
-      customCategories.forEach(cat => {
-        html += `<button class="cat-btn ${currentCategory === cat ? 'active' : ''}" onclick="filterCategory('${cat}')">${cat}</button>`;
-      });
-      bar.innerHTML = html;
-    }
-
-    window.filterCategory = function(cat) {
-      currentCategory = cat;
-      renderCategoriesBar();
-      renderSongs();
-    }
-
-    // EDYCJA PIEŚNI (TYLKO DLA ZALOGOWANEGO ADMINA)
-    window.openEditModal = function(songId) {
-      if (!isAdminLoggedIn) return;
-
-      editingSongId = songId;
-      const song = allSongs.find(s => s.id === songId);
-      if (!song) return;
-
-      document.getElementById('editModalSongTitle').innerText = song.cleanTitle;
-
-      const select = document.getElementById('editCatSelect');
-      let html = customCategories.map(c => `<option value="${c}" ${c === song.category ? 'selected' : ''}>${c}</option>`).join('');
-      html += `<option value="__NEW__">+ Wpisz własną nową kategorię...</option>`;
-      select.innerHTML = html;
-
-      document.getElementById('customCatGroup').style.display = 'none';
-      document.getElementById('customCatInput').value = '';
-      document.getElementById('editSongModal').classList.add('active');
-    }
-
-    window.handleCatSelectChange = function() {
-      const select = document.getElementById('editCatSelect');
-      const customGroup = document.getElementById('customCatGroup');
-      if (select.value === '__NEW__') {
-        customGroup.style.display = 'block';
-      } else {
-        customGroup.style.display = 'none';
-      }
-    }
-
-    window.saveSongEdit = async function() {
-      if (!editingSongId) return;
-
-      const select = document.getElementById('editCatSelect');
-      let finalCat = select.value;
-
-      if (finalCat === '__NEW__') {
-        const customVal = document.getElementById('customCatInput').value.trim();
-        if (!customVal) {
-          alert('Wpisz nazwę własnej kategorii!');
-          return;
-        }
-        finalCat = customVal;
-        if (!customCategories.includes(finalCat)) {
-          customCategories.push(finalCat);
-        }
-      }
-
-      songCategoryMap[editingSongId] = finalCat;
-
-      const song = allSongs.find(s => s.id === editingSongId);
-      if (song) song.category = finalCat;
-
-      await saveCloudData();
-      renderCategoriesBar();
-      renderSongs();
-      closeEditModal();
-      alert('Zapisano zmiany w kategorii!');
-    }
-
-    window.closeEditModal = function() {
-      document.getElementById('editSongModal').classList.remove('active');
-      editingSongId = null;
-    }
-
-    // REPERTUAR
-    window.toggleRepertuar = function(songId) {
-      const index = currentRepertuar.findIndex(s => s.id === songId);
-      if (index > -1) {
-        currentRepertuar.splice(index, 1);
-      } else {
-        const song = allSongs.find(s => s.id === songId);
-        if (song) currentRepertuar.push(song);
-      }
-      localStorage.setItem('currentRepertuar', JSON.stringify(currentRepertuar));
-      updateRepertuarBadge();
-      renderSongs();
-      renderRepertuarList();
-    }
-
-    function updateRepertuarBadge() {
-      const count = currentRepertuar.length;
-      document.getElementById('repCount').innerText = count;
-      document.getElementById('dashRepCount').innerText = count;
-    }
-
-    window.renderRepertuarList = function() {
-      const container = document.getElementById('repertuarList');
-      if (currentRepertuar.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:40px; color:#525252;">Brak pieśni w zestawie na teraz.</div>';
-        return;
-      }
-
-      let html = '';
-      const timestamp = Date.now();
-      currentRepertuar.forEach((song, idx) => {
-        const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000?v=${timestamp}`;
-        html += `
-          <div class="list-item">
-            <div onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')" style="cursor:pointer; flex:1;">
-              <strong style="font-size:1rem;">${idx + 1}. ${song.cleanTitle}</strong>
-              <div class="song-meta-row" style="justify-content:flex-start; margin-top:4px;">
-                <span class="badge-category">${song.category}</span>
-                ${song.slideNumber ? `<span class="badge-slide">Slajd #${song.slideNumber}</span>` : ''}
-              </div>
-            </div>
-            <div style="display:flex; gap:6px;">
-              <button class="edit-song-btn" onclick="openEditModal('${song.id}')">✏️</button>
-              <button class="icon-btn" onclick="toggleRepertuar('${song.id}')">Usuń</button>
-            </div>
-          </div>
-        `;
-      });
-      container.innerHTML = html;
-    }
-
-    window.clearCurrentRepertuar = function() {
-      currentRepertuar = [];
-      localStorage.setItem('currentRepertuar', JSON.stringify([]));
-      updateRepertuarBadge();
-      renderSongs();
-      renderRepertuarList();
-    }
-
-    window.saveRepertuarToArchiwum = async function() {
-      if (currentRepertuar.length === 0) return alert('Repertuar jest pusty!');
-      const name = prompt('Podaj nazwę dla tego repertuaru (np. Msza Św. 10:00):');
-      if (!name) return;
-
-      archiwumRepertuarow.unshift({
-        id: Date.now(),
-        date: new Date().toLocaleDateString('pl-PL'),
-        title: name,
-        songs: [...currentRepertuar]
-      });
-
-      await saveCloudData();
-      alert('Zapisano w archiwum w chmurze!');
-      renderArchiwumList();
-    }
-
-    window.renderArchiwumList = function() {
-      const container = document.getElementById('archiwumList');
-      if (archiwumRepertuarow.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:40px; color:#525252;">Brak zapisanych repertuarów w chmurze.</div>';
-        return;
-      }
-
-      let html = '';
-      archiwumRepertuarow.forEach(item => {
-        html += `
-          <div class="admin-card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-              <strong>${item.title}</strong>
-              <small style="color:#737373;">${item.date}</small>
-            </div>
-            <div style="font-size:0.85rem; color:#a3a3a3; margin-bottom:12px;">
-              ${item.songs.map(s => s.cleanTitle).join(' • ')}
-            </div>
-            <div style="display:flex; gap:8px;">
-              <button class="icon-btn" style="flex:1;" onclick="loadArchivedToCurrent(${item.id})">Wczytaj zestaw</button>
-              <button class="icon-btn" onclick="deleteArchived(${item.id})">Usuń</button>
-            </div>
-          </div>
-        `;
-      });
-      container.innerHTML = html;
-    }
-
-    window.loadArchivedToCurrent = function(id) {
-      const item = archiwumRepertuarow.find(a => a.id === id);
-      if (item) {
-        currentRepertuar = [...item.songs];
-        localStorage.setItem('currentRepertuar', JSON.stringify(currentRepertuar));
-        updateRepertuarBadge();
-        switchView('repertuar');
-      }
-    }
-
-    window.deleteArchived = async function(id) {
-      archiwumRepertuarow = archiwumRepertuarow.filter(a => a.id !== id);
-      await saveCloudData();
-      renderArchiwumList();
-    }
-
-    // PODSTRONA CZYTAŃ LITURGICZNYCH
-    window.loadReadings = function(type) {
-      const iframe = document.getElementById('readingsIframe');
+    // POBIERANIE I PARSOWANIE CZYTAŃ (WERSJA I)
+    async function loadReadings(type) {
+      const container = document.getElementById('readingsContent');
       const btnDzis = document.getElementById('btnCzytaniaDzis');
       const btnNiedziela = document.getElementById('btnCzytaniaNiedziela');
 
-      const formatDate = (date) => {
-        const yyyy = date.getFullYear();
-        const mm = String(date.getMonth() + 1).padStart(2, '0');
-        const dd = String(date.getDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
-      };
-
+      // Obsługa aktywnego przycisku
       if (type === 'dzis') {
-        const today = new Date();
-        iframe.src = `https://niezbednik.niedziela.pl/liturgia/${formatDate(today)}`;
-        
-        btnDzis.style.background = '#f5f5f5';
-        btnDzis.style.color = '#000';
-        btnNiedziela.style.background = '#141414';
-        btnNiedziela.style.color = '#fff';
+        btnDzis.classList.add('active');
+        btnNiedziela.classList.remove('active');
       } else {
-        const today = new Date();
-        const dayOfWeek = today.getDay(); // 0 = niedziela
+        btnNiedziela.classList.add('active');
+        btnDzis.classList.remove('active');
+      }
+
+      // Wyliczanie daty
+      let targetDate = new Date();
+      if (type === 'niedziela') {
+        const dayOfWeek = targetDate.getDay();
         const daysUntilSunday = dayOfWeek === 0 ? 0 : (7 - dayOfWeek);
-        
-        const sunday = new Date(today);
-        sunday.setDate(today.getDate() + daysUntilSunday);
-        
-        iframe.src = `https://niezbednik.niedziela.pl/liturgia/${formatDate(sunday)}`;
-        
-        btnNiedziela.style.background = '#f5f5f5';
-        btnNiedziela.style.color = '#000';
-        btnDzis.style.background = '#141414';
-        btnDzis.style.color = '#fff';
+        targetDate.setDate(targetDate.getDate() + daysUntilSunday);
+      }
+
+      const yyyy = targetDate.getFullYear();
+      const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(targetDate.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+
+      const targetUrl = `https://niezbednik.niedziela.pl/liturgia/${dateStr}`;
+      
+      container.innerHTML = `<div class="loading-box">Pobieranie i oczyszczanie tekstów na ${dateStr}...</div>`;
+
+      try {
+        // Pobranie danych przez serwer CORS Proxy
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+        const response = await fetch(proxyUrl);
+        const data = await response.json();
+
+        if (!data.contents) throw new Error("Brak zawartości ze strony");
+
+        // Parsowanie kodu HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data.contents, 'text/html');
+
+        // Odnajdywanie kontenera z czytaniami
+        const mainContent = doc.querySelector('.liturgia-content') || doc.querySelector('#content') || doc.querySelector('main');
+
+        if (mainContent) {
+          // Wycinanie reklam, bannerów, nawigacji, odnośników społecznościowych i zbędnych skryptów
+          const unwantedSelectors = [
+            'script', 'iframe', 'style', 'nav', 'footer', 
+            '.ads', '.banner', '.share-buttons', '.sidebar', 
+            '#header', '#footer', '.bottom-menu'
+          ];
+          
+          unwantedSelectors.forEach(selector => {
+            mainContent.querySelectorAll(selector).forEach(el => el.remove());
+          });
+
+          // Wstawianie przefiltrowanego tekstu do aplikacji
+          container.innerHTML = `
+            <h3 style="font-family:'Cinzel',serif; color:#fff; text-align:center; margin-bottom:16px;">Liturgia Słowa: ${dateStr}</h3>
+            <div class="parsed-readings">${mainContent.innerHTML}</div>
+          `;
+        } else {
+          throw new Error("Nie znaleziono sekcji z liturgia.");
+        }
+
+      } catch (err) {
+        console.error("Błąd parsowania:", err);
+        container.innerHTML = `
+          <div style="text-align:center; padding: 20px;">
+            <p style="color:#ef4444; margin-bottom:12px;">Nie udało się automatycznie wyciąć treści.</p>
+            <a href="${targetUrl}" target="_blank" style="color:#f59e0b; text-decoration:underline; font-size:0.9rem;">
+              Otwórz czytania bezpośrednio na stronie źródłowej
+            </a>
+          </div>
+        `;
       }
     }
 
-    // NAWIGACJA
-    window.switchView = function(viewName) {
-      document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-
-      if (viewName === 'home') {
-        document.getElementById('viewHome').classList.add('active');
-        document.getElementById('tabHome').classList.add('active');
-        document.getElementById('bazaHeaderControls').style.display = 'none';
-      }
-      if (viewName === 'baza') {
-        document.getElementById('viewBaza').classList.add('active');
-        document.getElementById('tabBaza').classList.add('active');
-        document.getElementById('bazaHeaderControls').style.display = 'block';
-      }
-      if (viewName === 'repertuar') {
-        document.getElementById('viewRepertuar').classList.add('active');
-        document.getElementById('tabRepertuar').classList.add('active');
-        document.getElementById('bazaHeaderControls').style.display = 'none';
-        renderRepertuarList();
-      }
-      if (viewName === 'czytania') {
-        document.getElementById('viewCzytania').classList.add('active');
-        document.getElementById('tabCzytania').classList.add('active');
-        document.getElementById('bazaHeaderControls').style.display = 'none';
-        loadReadings('dzis');
-      }
-      if (viewName === 'archiwum') {
-        document.getElementById('viewArchiwum').classList.add('active');
-        document.getElementById('tabArchiwum').classList.add('active');
-        document.getElementById('bazaHeaderControls').style.display = 'none';
-        renderArchiwumList();
-      }
-    }
-
-    window.openModal = function(title, category, slide, imageUrl) {
-      document.getElementById('modalTitle').innerText = title;
-      document.getElementById('modalCategory').innerText = category;
-      document.getElementById('modalSlide').innerText = slide ? `Slajd #${slide}` : '';
-      document.getElementById('modalImage').src = imageUrl;
-      document.getElementById('imageModal').classList.add('active');
-    }
-
-    window.closeModal = function() {
-      document.getElementById('imageModal').classList.remove('active');
-      document.getElementById('modalImage').src = '';
-    }
-
-    window.forceRefresh = function() {
-      loadSongs();
-    }
-
-    document.getElementById('searchInput').addEventListener('input', renderSongs);
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js?v=' + Date.now()).catch(err => console.log('SW error:', err));
-    }
-
-    loadSongs();
+    // Załaduj dzisiejsze czytania automatycznie przy wystarcie
+    loadReadings('dzis');
   </script>
 </body>
 </html>
