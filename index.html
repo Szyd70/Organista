@@ -300,7 +300,6 @@
       font-size: 0.7rem;
       font-weight: 600;
     }
-
     .edit-song-btn {
       display: none;
       background: rgba(10,10,10,0.88);
@@ -483,54 +482,36 @@
       font-family: 'Cinzel', serif;
     }
 
-    /* Style dla Podstrony Czytań z API */
+    /* Moduł Czytań Liturgicznych (Native Text Container) */
     .readings-container {
       width: 100%;
       min-height: 60vh;
-      max-height: 75vh;
+      max-height: 72vh;
       border: 1px solid #262626;
       border-radius: 8px;
       overflow-y: auto;
       background-color: #141414;
-      padding: 16px;
-    }
-
-    .reading-block {
-      background-color: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 14px;
-    }
-
-    .reading-header {
-      font-family: 'Cinzel', serif;
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: #f59e0b;
-      margin-bottom: 6px;
-      border-bottom: 1px solid #333;
-      padding-bottom: 4px;
-    }
-
-    .reading-sig {
-      font-size: 0.8rem;
-      color: #a3a3a3;
-      margin-bottom: 10px;
-      font-style: italic;
-    }
-
-    .reading-text {
+      padding: 20px;
       font-size: 0.95rem;
       line-height: 1.6;
-      color: #e5e5e5;
-      white-space: pre-line;
+      color: #d4d4d4;
     }
-
-    .reading-psalm-ref {
+    .readings-container h2, .readings-container h3 {
+      font-family: 'Cinzel', serif;
+      color: #ffffff;
+      margin-top: 16px;
+      margin-bottom: 8px;
+    }
+    .readings-container h2:first-child, .readings-container h3:first-child {
+      margin-top: 0;
+    }
+    .readings-container p {
+      margin-bottom: 12px;
+    }
+    .readings-container .sigla {
       font-weight: 700;
       color: #38bdf8;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
   </style>
 </head>
@@ -606,14 +587,14 @@
       <div id="repertuarList"></div>
     </div>
 
-    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE (API) -->
+    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE (Serverless Proxy Version) -->
     <div id="viewCzytania" class="section-view">
       <div style="display:flex; gap:8px; margin-bottom:12px;">
         <button class="icon-btn active" id="btnCzytaniaDzis" style="flex:1;" onclick="loadReadings('dzis')">📅 Dzisiejsze Czytania</button>
         <button class="icon-btn" id="btnCzytaniaNiedziela" style="flex:1;" onclick="loadReadings('niedziela')">⛪ Najbliższa Niedziela</button>
       </div>
-      <div class="readings-container" id="readingsApiContent">
-        <div class="status-msg">Ładowanie tekstu liturgicznego...</div>
+      <div id="readingsContent" class="readings-container">
+        Wybierz opcję, aby wczytać czytania...
       </div>
     </div>
 
@@ -1048,152 +1029,73 @@
       renderArchiwumList();
     }
 
-    // PODSTRONA CZYTAŃ LITURGICZNYCH (ZINTEGRADOWANA Z PROXY CORS)
+    // PODSTRONA CZYTAŃ LITURGICZNYCH (Pobieranie przez własny Vercel Serverless Function)
     window.loadReadings = async function(type) {
-      const container = document.getElementById('readingsApiContent');
+      const container = document.getElementById('readingsContent');
       const btnDzis = document.getElementById('btnCzytaniaDzis');
       const btnNiedziela = document.getElementById('btnCzytaniaNiedziela');
 
-      if (!container) return;
+      const today = new Date();
+      let targetDate = new Date(today);
 
-      let targetDate = new Date();
-      if (type === 'dzis') {
-        if (btnDzis) {
-          btnDzis.style.background = '#f5f5f5';
-          btnDzis.style.color = '#000';
-        }
-        if (btnNiedziela) {
-          btnNiedziela.style.background = '#141414';
-          btnNiedziela.style.color = '#fff';
-        }
-      } else {
-        const dayOfWeek = targetDate.getDay();
+      if (type === 'niedziela') {
+        const dayOfWeek = today.getDay();
         const daysUntilSunday = dayOfWeek === 0 ? 0 : (7 - dayOfWeek);
-        targetDate.setDate(targetDate.getDate() + daysUntilSunday);
+        targetDate.setDate(today.getDate() + daysUntilSunday);
         
-        if (btnNiedziela) {
-          btnNiedziela.style.background = '#f5f5f5';
-          btnNiedziela.style.color = '#000';
-        }
-        if (btnDzis) {
-          btnDzis.style.background = '#141414';
-          btnDzis.style.color = '#fff';
-        }
+        btnNiedziela.style.background = '#f5f5f5';
+        btnNiedziela.style.color = '#000';
+        btnDzis.style.background = '#141414';
+        btnDzis.style.color = '#fff';
+      } else {
+        btnDzis.style.background = '#f5f5f5';
+        btnDzis.style.color = '#000';
+        btnNiedziela.style.background = '#141414';
+        btnNiedziela.style.color = '#fff';
       }
 
       const yyyy = targetDate.getFullYear();
       const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
       const dd = String(targetDate.getDate()).padStart(2, '0');
-      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const formattedDate = `${yyyy}-${mm}-${dd}`;
 
-      container.innerHTML = `<div class="status-msg">Pobieranie czytań liturgicznych na dzień ${dateStr}...</div>`;
+      container.innerHTML = '<div style="text-align:center; padding:30px; color:#a3a3a3;">Pobieranie tekstów liturgicznych...</div>';
 
       try {
-        const targetUrl = `https://katolik.pl/api/reading/${dateStr}`;
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+        const res = await fetch(`/api/czytania?date=${formattedDate}`);
+        if (!res.ok) throw new Error('Błąd odpowiedzi serwera proxy');
         
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error("Błąd podczas pobierania danych z API.");
-
-        const data = await response.json();
-        renderReadingsData(data, dateStr);
+        const data = await res.json();
+        
+        if (data.html) {
+          container.innerHTML = data.html;
+        } else if (data.readings) {
+          let html = `<h2 style="margin-bottom:16px;">Czytania z dnia ${formattedDate}</h2>`;
+          data.readings.forEach(r => {
+            html += `
+              <div style="margin-bottom:20px;">
+                <h3 style="color:#f5f5f5;">${r.title || ''}</h3>
+                <div class="sigla">${r.sigla || ''}</div>
+                <p>${r.text || ''}</p>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        } else {
+          container.innerHTML = '<div style="text-align:center; color:#ef4444; padding:20px;">Nie odnaleziono treści czytań dla wybranego dnia.</div>';
+        }
       } catch (err) {
-        console.error("Błąd API Czytań:", err);
+        console.error("Błąd wczytywania czytań:", err);
         container.innerHTML = `
-          <div style="text-align:center; padding: 30px; color:#ef4444;">
-            <p style="font-weight:600; margin-bottom:8px;">Nie udało się pobrać czytań z API.</p>
-            <p style="color:#a3a3a3; font-size:0.85rem; margin-bottom:16px;">Przyczyna: Blokada CORS w przeglądarce lub brak odpowiedzi serwera.</p>
-            <button class="icon-btn" style="background:#262626; color:#fff; border:1px solid #404040; padding:8px 16px; border-radius:6px; cursor:pointer;" onclick="window.open('https://niedziela.pl/liturgia/${dateStr}', '_blank')">
-              Otwórz czytania na dzisiaj w nowej karcie ↗
-            </button>
+          <div style="text-align:center; padding:20px; color:#ef4444;">
+            <p style="font-weight:700; margin-bottom:8px;">Nie udało się wczytać czytań automatycznie.</p>
+            <p style="font-size:0.85rem; color:#a3a3a3; margin-bottom:16px;">Serwer proxy niedostępny lub brak połączenia.</p>
+            <a href="https://niezbednik.niedziela.pl/liturgia/${formattedDate}" target="_blank" rel="noopener noreferrer" class="icon-btn" style="display:inline-block; text-decoration:none; background:#262626; color:#fff; padding:10px 16px;">
+              Otwórz czytania na Niedziela.pl ↗
+            </a>
           </div>
         `;
       }
-    };
-
-    function renderReadingsData(data, dateStr) {
-      const container = document.getElementById('readingsApiContent');
-      if (!container) return;
-
-      if (!data) {
-        container.innerHTML = `<div class="status-msg">Brak danych na dzień ${dateStr}.</div>`;
-        return;
-      }
-
-      let html = `<h2 style="font-family:'Cinzel',serif; text-align:center; margin-bottom:16px; color:#fff; font-size:1.1rem;">Liturgia Słowa: ${dateStr}</h2>`;
-
-      if (data.title) {
-        html += `<h3 style="margin:0 0 16px 0; color:#a3a3a3; font-size:0.9rem; text-align:center;">${data.title}</h3>`;
-      }
-
-      // Format z Katolik.pl (first_reading / psalm / gospel)
-      const firstRead = data.first_reading || data.firstReading;
-      if (firstRead) {
-        const sig = typeof firstRead === 'object' ? (firstRead.siglum || '') : '';
-        const txt = typeof firstRead === 'object' ? (firstRead.text || '') : firstRead;
-        html += `
-          <div class="reading-block">
-            <div class="reading-header">Pierwsze Czytanie</div>
-            ${sig ? `<div class="reading-sig">${sig}</div>` : ''}
-            <div class="reading-text">${txt}</div>
-          </div>
-        `;
-      }
-
-      if (data.psalm) {
-        const sig = typeof data.psalm === 'object' ? (data.psalm.siglum || '') : '';
-        const ref = typeof data.psalm === 'object' ? (data.psalm.refren || '') : '';
-        const txt = typeof data.psalm === 'object' ? (data.psalm.text || '') : data.psalm;
-        html += `
-          <div class="reading-block">
-            <div class="reading-header">Psalm Responsoryjny</div>
-            ${sig ? `<div class="reading-sig">${sig}</div>` : ''}
-            ${ref ? `<div class="reading-psalm-ref">Refren: ${ref}</div>` : ''}
-            <div class="reading-text">${txt}</div>
-          </div>
-        `;
-      }
-
-      const secondRead = data.second_reading || data.secondReading;
-      if (secondRead) {
-        const sig = typeof secondRead === 'object' ? (secondRead.siglum || '') : '';
-        const txt = typeof secondRead === 'object' ? (secondRead.text || '') : secondRead;
-        if (txt) {
-          html += `
-            <div class="reading-block">
-              <div class="reading-header">Drugie Czytanie</div>
-              ${sig ? `<div class="reading-sig">${sig}</div>` : ''}
-              <div class="reading-text">${txt}</div>
-            </div>
-          `;
-        }
-      }
-
-      if (data.acclamation) {
-        const txt = typeof data.acclamation === 'object' ? (data.acclamation.text || '') : data.acclamation;
-        if (txt) {
-          html += `
-            <div class="reading-block">
-              <div class="reading-header">Aklamacja</div>
-              <div class="reading-text">${txt}</div>
-            </div>
-          `;
-        }
-      }
-
-      if (data.gospel) {
-        const sig = typeof data.gospel === 'object' ? (data.gospel.siglum || '') : '';
-        const txt = typeof data.gospel === 'object' ? (data.gospel.text || '') : data.gospel;
-        html += `
-          <div class="reading-block" style="border-color:#f59e0b;">
-            <div class="reading-header" style="color:#f59e0b;">Ewangelia</div>
-            ${sig ? `<div class="reading-sig">${sig}</div>` : ''}
-            <div class="reading-text">${txt}</div>
-          </div>
-        `;
-      }
-
-      container.innerHTML = html;
     }
 
     // NAWIGACJA
