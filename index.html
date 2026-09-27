@@ -5,8 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Śpiewnik Organowy</title>
 
+  <!-- Cache-Control Meta Tags (wymuszanie braku keszowania w przeglądarce) -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <!-- PWA Setup -->
-  <link rel="manifest" href="manifest.json" />
+  <link rel="manifest" href="manifest.json?v=2" />
   <link rel="icon" type="image/svg+xml" href="/icon.svg" />
   <link rel="apple-touch-icon" href="/icon.svg" />
   <meta name="theme-color" content="#0a0a0a" />
@@ -48,15 +53,40 @@
       margin-bottom: 16px;
     }
 
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
     h1 {
       font-family: 'Cinzel', serif;
       font-size: 1.35rem;
       font-weight: 700;
       letter-spacing: 2px;
       color: #f5f5f5;
-      text-align: center;
       text-transform: uppercase;
-      margin-bottom: 12px;
+      flex: 1;
+      text-align: center;
+    }
+
+    .refresh-btn {
+      background-color: #171717;
+      border: 1px solid #333333;
+      color: #e5e5e5;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .refresh-btn:active {
+      background-color: #262626;
+      transform: scale(0.95);
     }
 
     /* Wyszukiwarka */
@@ -161,7 +191,7 @@
       filter: grayscale(0%);
     }
 
-    /* Odznaki na karcie (Numer slajdu & Kategoria) */
+    /* Odznaki na karcie */
     .slide-badge {
       position: absolute;
       top: 8px;
@@ -284,7 +314,7 @@
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
-      background-color: #ffffff; /* Kontrast dla czarnych nut */
+      background-color: #ffffff;
       border-radius: 4px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
@@ -306,7 +336,10 @@
 <body>
 
   <header>
-    <h1>Nuty Organowe</h1>
+    <div class="header-top">
+      <h1>Nuty Organowe</h1>
+      <button class="refresh-btn" onclick="forceRefresh()">↻ Odśwież</button>
+    </div>
     
     <div class="search-container">
       <input type="text" id="searchInput" class="search-bar" placeholder="Szukaj pieśni lub numeru slajdu..." />
@@ -349,9 +382,7 @@
   <script>
     // --- KONFIGURACJA GOOGLE DRIVE API ---
     const FOLDER_ID = '1W-9DISbSkwwwOUBXmiBIgcIKbdZqIHA-';
-    
-    // Wklej swój klucz API z Google Cloud Console:
-    const API_KEY = 'TWÓJ_KLUCZ_GOOGLE_API_KEY';
+    const API_KEY = 'AIzaSyDM3V9xJhY4AO2V3MaFN6MZIufi0OqGOCk';
 
     let allSongs = [];
     let currentCategory = 'Wszystkie';
@@ -359,17 +390,13 @@
     async function loadSongs() {
       const statusEl = document.getElementById('status');
 
-      if (API_KEY === 'TWÓJ_KLUCZ_GOOGLE_API_KEY') {
-        statusEl.className = 'status-msg error-msg';
-        statusEl.innerHTML = 'Uzupełnij <b>API_KEY</b> w kodzie!';
-        return;
-      }
-
+      // Unikalny timestamp chroniący przed zapamiętywaniem starej listy przez przeglądarkę
+      const cacheBuster = `&_cb=${Date.now()}`;
       const query = `'${FOLDER_ID}' in parents and trashed = false and (mimeType contains 'image/')`;
-      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,thumbnailLink)&pageSize=500&key=${API_KEY}`;
+      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,thumbnailLink)&pageSize=500&key=${API_KEY}${cacheBuster}`;
 
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) {
           const errData = await response.json();
           throw new Error(errData.error?.message || `Błąd HTTP: ${response.status}`);
@@ -383,10 +410,7 @@
           return;
         }
 
-        // Parsowanie danych z nazwy pliku
         allSongs = files.map(file => parseFileData(file));
-
-        // Sortowanie alfabetyczne po nazwie utworu
         allSongs.sort((a, b) => a.cleanTitle.localeCompare(b.cleanTitle, 'pl'));
 
         statusEl.style.display = 'none';
@@ -398,11 +422,9 @@
       }
     }
 
-    // Ekstrakcja Tytułu, Numeru Slajdu oraz Kategorii z nazwy pliku
     function parseFileData(file) {
       let rawName = file.name.replace(/\.(jpg|jpeg|png|webp)$/i, '').trim();
 
-      // 1. Ekstrakcja Numeru Slajdu z nawiasów np. "Ojcze z niebios (611)" -> 611
       let slideNum = null;
       const slideMatch = rawName.match(/\((\d+)\)/) || rawName.match(/[-_]\s*(\d+)$/);
       if (slideMatch) {
@@ -410,7 +432,6 @@
         rawName = rawName.replace(slideMatch[0], '').trim();
       }
 
-      // 2. Wycofanie/Kategoryzacja utworu
       let category = 'Ogólne';
       const lower = file.name.toLowerCase();
 
@@ -448,9 +469,10 @@
         return;
       }
 
+      const timestamp = Date.now();
       filtered.forEach(song => {
-        const thumbUrl = `https://lh3.googleusercontent.com/d/${song.id}=s400`;
-        const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000`;
+        const thumbUrl = `https://lh3.googleusercontent.com/d/${song.id}=s400?v=${timestamp}`;
+        const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000?v=${timestamp}`;
 
         const card = document.createElement('div');
         card.className = 'song-card';
@@ -476,7 +498,6 @@
     function filterCategory(catName) {
       currentCategory = catName;
 
-      // Aktualizacja wyglądu przycisków
       document.querySelectorAll('.cat-btn').forEach(btn => {
         if (btn.innerText.includes(catName) || (catName === 'Ogólne' && btn.innerText.includes('Ogólne'))) {
           btn.classList.add('active');
@@ -488,7 +509,6 @@
       renderSongs();
     }
 
-    // Modal Viewer
     function openModal(song, imageUrl) {
       document.getElementById('modalTitle').innerText = song.cleanTitle;
       document.getElementById('modalCategory').innerText = song.category;
@@ -503,15 +523,22 @@
       document.getElementById('modalImage').src = '';
     }
 
-    // Reakcja na wyszukiwanie
-    document.getElementById('searchInput').addEventListener('input', renderSongs);
-
-    // Rejestracja Service Workera
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
+    function forceRefresh() {
+      document.getElementById('status').style.display = 'block';
+      document.getElementById('status').innerText = 'Odświeżanie z Google Drive...';
+      document.getElementById('songGrid').innerHTML = '';
+      loadSongs();
     }
 
-    // Start
+    document.getElementById('searchInput').addEventListener('input', renderSongs);
+
+    // --- REJESTRACJA SERVICE WORKERA Z OBSŁUGĄ STRATEGII NETWORK-FIRST ---
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js?v=' + Date.now()).then(reg => {
+        reg.update();
+      }).catch(err => console.log('SW error:', err));
+    }
+
     loadSongs();
   </script>
 </body>
