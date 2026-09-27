@@ -509,7 +509,7 @@
       <button class="icon-btn" id="adminAuthBtn" onclick="handleAdminToggle()">🔑 Zaloguj</button>
     </div>
 
-    <!-- Nawigacja Po Podstronach (Domyślnie aktywna zakładka Czytania) -->
+    <!-- Nawigacja Po Podstronach -->
     <div class="nav-tabs">
       <button class="tab-btn" id="tabHome" onclick="switchView('home')">🏠 Główna</button>
       <button class="tab-btn" id="tabBaza" onclick="switchView('baza')">🎼 Baza</button>
@@ -572,14 +572,14 @@
       <div id="repertuarList"></div>
     </div>
 
-    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE (DOMYŚLNIE AKTYWNA) -->
+    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE -->
     <div id="viewCzytania" class="section-view active">
       <div style="display:flex; gap:8px; margin-bottom:12px;">
         <button class="icon-btn active" id="btnCzytaniaDzis" style="flex:1;" onclick="loadReadings('dzis')">📅 Dzisiejsze Czytania</button>
         <button class="icon-btn" id="btnCzytaniaNiedziela" style="flex:1;" onclick="loadReadings('niedziela')">⛪ Najbliższa Niedziela</button>
       </div>
       <div class="readings-container">
-        <iframe id="readingsIframe" src="about:blank"></iframe>
+        <iframe id="readingsIframe" src="about:blank" onload="injectIframeCleanup()"></iframe>
       </div>
     </div>
 
@@ -1009,7 +1009,7 @@
       renderArchiwumList();
     }
 
-    // PODSTRONA CZYTAŃ LITURGICZNYCH
+    // POBIERANIE CZYTAŃ I AUTOMATYCZNE DOCINANIE W RAMCE
     window.loadReadings = function(type) {
       const iframe = document.getElementById('readingsIframe');
       const btnDzis = document.getElementById('btnCzytaniaDzis');
@@ -1022,28 +1022,53 @@
         return `${yyyy}-${mm}-${dd}`;
       };
 
+      let targetUrl = '';
       if (type === 'dzis') {
         const today = new Date();
-        iframe.src = `https://niezbednik.niedziela.pl/liturgia/${formatDate(today)}`;
-        
+        targetUrl = `https://niezbednik.niedziela.pl/liturgia/${formatDate(today)}`;
         btnDzis.style.background = '#f5f5f5';
         btnDzis.style.color = '#000';
         btnNiedziela.style.background = '#141414';
         btnNiedziela.style.color = '#fff';
       } else {
         const today = new Date();
-        const dayOfWeek = today.getDay(); // 0 = niedziela
+        const dayOfWeek = today.getDay();
         const daysUntilSunday = dayOfWeek === 0 ? 0 : (7 - dayOfWeek);
-        
         const sunday = new Date(today);
         sunday.setDate(today.getDate() + daysUntilSunday);
-        
-        iframe.src = `https://niezbednik.niedziela.pl/liturgia/${formatDate(sunday)}`;
-        
+        targetUrl = `https://niezbednik.niedziela.pl/liturgia/${formatDate(sunday)}`;
         btnNiedziela.style.background = '#f5f5f5';
         btnNiedziela.style.color = '#000';
         btnDzis.style.background = '#141414';
         btnDzis.style.color = '#fff';
+      }
+
+      iframe.src = targetUrl;
+    }
+
+    // Funkcja ukrywająca elementy nad i pod samymi czytaniami (górne menu strony oraz sekcję "Polecamy")
+    window.injectIframeCleanup = function() {
+      try {
+        const iframe = document.getElementById('readingsIframe');
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        if (!doc) return;
+
+        // Wstrzyknięcie stylów CSS ukrywających niepotrzebne elementy na stronie źródłowej
+        const style = doc.createElement('style');
+        style.innerHTML = `
+          header, footer, nav, .site-header, .site-footer, .polecamy, .sidebar, .ads, script, noscript {
+            display: none !important;
+          }
+          body {
+            background-color: #0a0a0a !important;
+            color: #e5e5e5 !important;
+          }
+        `;
+        doc.head.appendChild(style);
+      } catch (e) {
+        // Przeglądarka ze względów bezpieczeństwa może zablokować modyfikację ramki z innej domeny (CORS),
+        // w takim wypadku działa zamontowany wyżej filtr CSS (invert), który zapewnia czytelny ciemny motyw.
+        console.log("Dostęp do DOM ramki ograniczony polityką CORS przeglądarki.");
       }
     }
 
