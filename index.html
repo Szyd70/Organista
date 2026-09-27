@@ -509,12 +509,12 @@
       <button class="icon-btn" id="adminAuthBtn" onclick="handleAdminToggle()">🔑 Zaloguj</button>
     </div>
 
-    <!-- Nawigacja Po Podstronach -->
+    <!-- Nawigacja Po Podstronach (Strona Główna domyślnie aktywna) -->
     <div class="nav-tabs">
-      <button class="tab-btn" id="tabHome" onclick="switchView('home')">🏠 Główna</button>
+      <button class="tab-btn active" id="tabHome" onclick="switchView('home')">🏠 Główna</button>
       <button class="tab-btn" id="tabBaza" onclick="switchView('baza')">🎼 Baza</button>
       <button class="tab-btn" id="tabRepertuar" onclick="switchView('repertuar')">📋 Repertuar (<span id="repCount">0</span>)</button>
-      <button class="tab-btn active" id="tabCzytania" onclick="switchView('czytania')">📖 Czytania</button>
+      <button class="tab-btn" id="tabCzytania" onclick="switchView('czytania')">📖 Czytania</button>
       <button class="tab-btn" id="tabArchiwum" onclick="switchView('archiwum')">📚 Archiwum</button>
     </div>
 
@@ -529,8 +529,8 @@
   <main>
     <div id="status" class="status-msg" style="display:none;">Ładowanie bazy i synchronizacja...</div>
 
-    <!-- PODSTRONA 1: STRONA GŁÓWNA -->
-    <div id="viewHome" class="section-view">
+    <!-- PODSTRONA 1: STRONA GŁÓWNA (Domyślnie aktywna) -->
+    <div id="viewHome" class="section-view active">
       <div class="dashboard-hero">
         <h2>Laudate Dominum</h2>
         <p>Interaktywny śpiewnik i zarządca repertuaru liturgicznego</p>
@@ -572,8 +572,8 @@
       <div id="repertuarList"></div>
     </div>
 
-    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE (Archibial.pl bez naszych przycisków) -->
-    <div id="viewCzytania" class="section-view active">
+    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE -->
+    <div id="viewCzytania" class="section-view">
       <div class="readings-container">
         <iframe id="readingsIframe" src="https://archibial.pl/czytania/"></iframe>
       </div>
@@ -1062,7 +1062,7 @@
       navigator.serviceWorker.register('/sw.js?v=' + Date.now()).catch(err => console.log('SW error:', err));
     }
 
-    // Inicjalizacja przy uruchomieniu aplikacji
+    // Inicjalizacja bazy pieśni w tle
     loadSongs();
   </script>
 </body>
