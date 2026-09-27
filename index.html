@@ -482,7 +482,7 @@
       font-family: 'Cinzel', serif;
     }
 
-    /* Moduł Czytań Liturgicznych (Native Text Container) */
+    /* Moduł Czytań Liturgicznych */
     .readings-container {
       width: 100%;
       min-height: 60vh;
@@ -587,7 +587,7 @@
       <div id="repertuarList"></div>
     </div>
 
-    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE (Serverless Proxy Version) -->
+    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE -->
     <div id="viewCzytania" class="section-view">
       <div style="display:flex; gap:8px; margin-bottom:12px;">
         <button class="icon-btn active" id="btnCzytaniaDzis" style="flex:1;" onclick="loadReadings('dzis')">📅 Dzisiejsze Czytania</button>
@@ -844,7 +844,7 @@
       renderSongs();
     }
 
-    // EDYCJA PIEŚNI (TYLKO DLA ZALOGOWANEGO ADMINA)
+    // EDYCJA PIEŚNI
     window.openEditModal = function(songId) {
       if (!isAdminLoggedIn) return;
 
@@ -1029,7 +1029,7 @@
       renderArchiwumList();
     }
 
-    // PODSTRONA CZYTAŃ LITURGICZNYCH (Pobieranie przez własny Vercel Serverless Function)
+    // POBIERANIE CZYTAŃ (API Vercel Serverless Function)
     window.loadReadings = async function(type) {
       const container = document.getElementById('readingsContent');
       const btnDzis = document.getElementById('btnCzytaniaDzis');
