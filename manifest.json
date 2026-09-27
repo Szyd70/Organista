@@ -3,9 +3,16 @@
   "name": "Nuty Organowe - Śpiewnik",
   "icons": [
     {
-      "src": "https://lh3.googleusercontent.com/d/1W-9DISbSkwwwOUBXmiBIgcIKbdZqIHA-",
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "sizes": "192x192"
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/",
