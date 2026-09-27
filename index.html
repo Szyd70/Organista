@@ -3,13 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Śpiewnik - Nuty Organowe</title>
-  
+  <title>Śpiewnik Organowy</title>
+
   <!-- PWA Setup -->
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0f172a" />
+  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+  <link rel="apple-touch-icon" href="/icon.svg" />
+  <meta name="theme-color" content="#0a0a0a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <!-- Google Fonts - Dostojny liturgiczny charakter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Playfair+Display:ital,wght@0,500;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
   <style>
     * {
@@ -18,91 +25,182 @@
       padding: 0;
       -webkit-tap-highlight-color: transparent;
     }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #0f172a;
-      color: #f8fafc;
-      padding: 16px;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #0a0a0a;
+      color: #e5e5e5;
       min-height: 100vh;
+      padding: 16px;
+      padding-bottom: 32px;
     }
-    
-    /* Header / Search */
+
+    /* Heavy Sacred Header */
     header {
       position: sticky;
       top: 0;
-      background-color: #0f172a;
+      background-color: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(8px);
+      padding-top: 8px;
       padding-bottom: 12px;
-      z-index: 10;
+      z-index: 20;
+      border-bottom: 1px solid #262626;
+      margin-bottom: 16px;
     }
+
     h1 {
-      font-size: 1.4rem;
-      margin-bottom: 10px;
-      color: #38bdf8;
+      font-family: 'Cinzel', serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #f5f5f5;
       text-align: center;
+      text-transform: uppercase;
+      margin-bottom: 12px;
     }
+
+    /* Wyszukiwarka */
     .search-container {
-      position: relative;
+      margin-bottom: 12px;
     }
     .search-bar {
       width: 100%;
       padding: 12px 16px;
-      font-size: 1rem;
-      border-radius: 10px;
-      border: 1px solid #334155;
-      background-color: #1e293b;
-      color: #fff;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: 1px solid #333333;
+      background-color: #141414;
+      color: #ffffff;
       outline: none;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .search-bar:focus {
-      border-color: #38bdf8;
+      border-color: #d4d4d4;
+      box-shadow: 0 0 0 1px #d4d4d4;
     }
 
-    /* Grid z plikami */
+    /* Kategorie - Pasek filtrów */
+    .categories-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .categories-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cat-btn {
+      background-color: #171717;
+      color: #a3a3a3;
+      border: 1px solid #262626;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .cat-btn.active {
+      background-color: #f5f5f5;
+      color: #0a0a0a;
+      border-color: #ffffff;
+      font-weight: 600;
+    }
+
+    /* Grid z kartami */
     .song-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 14px;
       margin-top: 12px;
     }
     @media (min-width: 600px) {
       .song-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 16px;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 18px;
       }
     }
 
     /* Karty pieśni */
     .song-card {
-      background-color: #1e293b;
-      border: 1px solid #334155;
+      background-color: #141414;
+      border: 1px solid #262626;
       border-radius: 8px;
       overflow: hidden;
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      transition: transform 0.15s ease, border-color 0.15s ease;
+      position: relative;
+      transition: transform 0.15s ease, border-color 0.2s ease;
+    }
+    .song-card:hover {
+      border-color: #525252;
     }
     .song-card:active {
-      transform: scale(0.97);
+      transform: scale(0.98);
+    }
+
+    .card-img-wrapper {
+      position: relative;
+      width: 100%;
+      height: 180px;
+      background-color: #000000;
+      overflow: hidden;
     }
     .song-card img {
       width: 100%;
-      height: 160px;
+      height: 100%;
       object-fit: cover;
-      background-color: #0284c710;
+      filter: grayscale(20%);
+      transition: filter 0.2s;
     }
-    .song-title {
-      padding: 10px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #e2e8f0;
-      line-height: 1.3;
-      text-align: center;
-      word-break: break-word;
+    .song-card:hover img {
+      filter: grayscale(0%);
     }
 
-    /* Fullscreen Modal / Viewer */
+    /* Odznaki na karcie (Numer slajdu & Kategoria) */
+    .slide-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background-color: rgba(10, 10, 10, 0.88);
+      border: 1px solid #404040;
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .song-info {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      justify-content: space-between;
+    }
+    .song-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #f5f5f5;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    .song-category {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #737373;
+      font-weight: 500;
+    }
+
+    /* Modal / Viewer Nut */
     .modal {
       display: none;
       position: fixed;
@@ -110,60 +208,98 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: rgba(0, 0, 0, 0.95);
+      background-color: #000000;
       z-index: 100;
       flex-direction: column;
     }
     .modal.active {
       display: flex;
     }
+
     .modal-header {
+      padding: 16px 20px;
+      background-color: #0a0a0a;
+      border-bottom: 1px solid #262626;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 16px;
-      background-color: #1e293b;
     }
-    .modal-title {
-      font-size: 1rem;
-      color: #fff;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .modal-header-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
       max-width: 80%;
     }
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+    .modal-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.78rem;
+    }
+    .meta-tag {
+      background-color: #1f1f1f;
+      border: 1px solid #333333;
+      color: #a3a3a3;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .meta-slide {
+      color: #e5e5e5;
+      font-weight: 600;
+    }
+
     .close-btn {
-      background: none;
-      border: none;
-      color: #38bdf8;
-      font-size: 1.1rem;
+      background: #171717;
+      border: 1px solid #333333;
+      color: #ffffff;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
     }
+    .close-btn:active {
+      background-color: #262626;
+    }
+
     .modal-body {
       flex: 1;
       overflow: auto;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 8px;
+      padding: 12px;
+      background-color: #050505;
     }
     .modal-body img {
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
+      background-color: #ffffff; /* Kontrast dla czarnych nut */
+      border-radius: 4px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
 
-    /* Stany ładowania i błędów */
+    /* Stany ładowania */
     .status-msg {
       text-align: center;
-      padding: 40px 16px;
-      color: #94a3b8;
-      font-size: 1rem;
+      padding: 60px 16px;
+      color: #737373;
+      font-size: 0.95rem;
+      font-family: 'Cinzel', serif;
+      letter-spacing: 1px;
     }
     .error-msg {
-      color: #f87171;
+      color: #ef4444;
     }
   </style>
 </head>
@@ -171,20 +307,38 @@
 
   <header>
     <h1>Nuty Organowe</h1>
+    
     <div class="search-container">
-      <input type="text" id="searchInput" class="search-bar" placeholder="Szukaj pieśni..." />
+      <input type="text" id="searchInput" class="search-bar" placeholder="Szukaj pieśni lub numeru slajdu..." />
+    </div>
+
+    <!-- Pasek Filtrowania Kategorii -->
+    <div class="categories-bar" id="categoriesBar">
+      <button class="cat-btn active" onclick="filterCategory('Wszystkie')">Wszystkie</button>
+      <button class="cat-btn" onclick="filterCategory('Adwent')">Adwent</button>
+      <button class="cat-btn" onclick="filterCategory('Boże Narodzenie')">Boże Narodzenie</button>
+      <button class="cat-btn" onclick="filterCategory('Wielki Post')">Wielki Post</button>
+      <button class="cat-btn" onclick="filterCategory('Wielkanoc')">Wielkanoc</button>
+      <button class="cat-btn" onclick="filterCategory('Maryjne')">Maryjne</button>
+      <button class="cat-btn" onclick="filterCategory('Ogólne')">Ogólne / Inne</button>
     </div>
   </header>
 
   <main>
-    <div id="status" class="status-msg">Pobieranie listy nut z Google Drive...</div>
+    <div id="status" class="status-msg">Ładowanie śpiewnika...</div>
     <div id="songGrid" class="song-grid"></div>
   </main>
 
-  <!-- Fullscreen Image Viewer -->
+  <!-- Pełny Widok Utworu -->
   <div id="imageModal" class="modal">
     <div class="modal-header">
-      <span id="modalTitle" class="modal-title"></span>
+      <div class="modal-header-info">
+        <div id="modalTitle" class="modal-title"></div>
+        <div class="modal-meta">
+          <span id="modalCategory" class="meta-tag"></span>
+          <span id="modalSlide" class="meta-slide"></span>
+        </div>
+      </div>
       <button class="close-btn" onclick="closeModal()">Zamknij ✕</button>
     </div>
     <div class="modal-body">
@@ -193,85 +347,153 @@
   </div>
 
   <script>
-    // --- KONFIGURACJA API ---
+    // --- KONFIGURACJA GOOGLE DRIVE API ---
     const FOLDER_ID = '1W-9DISbSkwwwOUBXmiBIgcIKbdZqIHA-';
     
-    // Wklej tutaj swój wygenerowany w Google Cloud API Key
-    const API_KEY = 'AIzaSyDM3V9xJhY4AO2V3MaFN6MZIufi0OqGOCk';
+    // Wklej swój klucz API z Google Cloud Console:
+    const API_KEY = 'TWÓJ_KLUCZ_GOOGLE_API_KEY';
 
     let allSongs = [];
+    let currentCategory = 'Wszystkie';
 
     async function loadSongs() {
       const statusEl = document.getElementById('status');
 
       if (API_KEY === 'TWÓJ_KLUCZ_GOOGLE_API_KEY') {
         statusEl.className = 'status-msg error-msg';
-        statusEl.innerHTML = 'Uzupełnij <b>API_KEY</b> w pliku index.html!';
+        statusEl.innerHTML = 'Uzupełnij <b>API_KEY</b> w kodzie!';
         return;
       }
 
-      // Query: pliki z danego folderu, nie usunięte (trashed = false), typu image/jpeg, image/png
       const query = `'${FOLDER_ID}' in parents and trashed = false and (mimeType contains 'image/')`;
       const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,thumbnailLink)&pageSize=500&key=${API_KEY}`;
 
       try {
         const response = await fetch(url);
-        
         if (!response.ok) {
           const errData = await response.json();
           throw new Error(errData.error?.message || `Błąd HTTP: ${response.status}`);
         }
 
         const data = await response.json();
-        allSongs = data.files || [];
+        const files = data.files || [];
 
-        if (allSongs.length === 0) {
-          statusEl.innerText = 'Nie znaleziono obrazów JPG/PNG w wskazanym folderze.';
+        if (files.length === 0) {
+          statusEl.innerText = 'Nie znaleziono nut w tym folderze.';
           return;
         }
 
-        // Sortowanie alfabetyczne po nazwie pliku
-        allSongs.sort((a, b) => a.name.localeCompare(b.name, 'pl'));
+        // Parsowanie danych z nazwy pliku
+        allSongs = files.map(file => parseFileData(file));
+
+        // Sortowanie alfabetyczne po nazwie utworu
+        allSongs.sort((a, b) => a.cleanTitle.localeCompare(b.cleanTitle, 'pl'));
 
         statusEl.style.display = 'none';
-        renderSongs(allSongs);
+        renderSongs();
       } catch (err) {
-        console.error('Google Drive API Error:', err);
+        console.error('API Error:', err);
         statusEl.className = 'status-msg error-msg';
-        statusEl.innerText = `Błąd ładowania: ${err.message}`;
+        statusEl.innerText = `Błąd pobierania: ${err.message}`;
       }
     }
 
-    function renderSongs(songs) {
+    // Ekstrakcja Tytułu, Numeru Slajdu oraz Kategorii z nazwy pliku
+    function parseFileData(file) {
+      let rawName = file.name.replace(/\.(jpg|jpeg|png|webp)$/i, '').trim();
+
+      // 1. Ekstrakcja Numeru Slajdu z nawiasów np. "Ojcze z niebios (611)" -> 611
+      let slideNum = null;
+      const slideMatch = rawName.match(/\((\d+)\)/) || rawName.match(/[-_]\s*(\d+)$/);
+      if (slideMatch) {
+        slideNum = slideMatch[1];
+        rawName = rawName.replace(slideMatch[0], '').trim();
+      }
+
+      // 2. Wycofanie/Kategoryzacja utworu
+      let category = 'Ogólne';
+      const lower = file.name.toLowerCase();
+
+      if (lower.includes('adwent')) category = 'Adwent';
+      else if (lower.includes('kolęd') || lower.includes('boże narodzenie') || lower.includes('narodzen')) category = 'Boże Narodzenie';
+      else if (lower.includes('post') || lower.includes('krzyż')) category = 'Wielki Post';
+      else if (lower.includes('wielkanoc') || lower.includes('zmartwych')) category = 'Wielkanoc';
+      else if (lower.includes('maryj') || lower.includes('panna')) category = 'Maryjne';
+
+      return {
+        id: file.id,
+        cleanTitle: rawName,
+        slideNumber: slideNum,
+        category: category,
+        rawName: file.name
+      };
+    }
+
+    function renderSongs() {
       const gridEl = document.getElementById('songGrid');
       gridEl.innerHTML = '';
 
-      songs.forEach(song => {
-        // Obraz podglądu bezpośrednio z Google
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+      const filtered = allSongs.filter(song => {
+        const matchesCategory = (currentCategory === 'Wszystkie') || (song.category === currentCategory);
+        const matchesSearch = song.cleanTitle.toLowerCase().includes(searchTerm) || 
+                              (song.slideNumber && song.slideNumber.includes(searchTerm)) ||
+                              song.category.toLowerCase().includes(searchTerm);
+        return matchesCategory && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        gridEl.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:#525252;">Brak pieśni spełniających kryteria.</div>';
+        return;
+      }
+
+      filtered.forEach(song => {
         const thumbUrl = `https://lh3.googleusercontent.com/d/${song.id}=s400`;
         const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000`;
 
         const card = document.createElement('div');
         card.className = 'song-card';
-        card.onclick = () => openModal(song.name, fullUrl);
+        card.onclick = () => openModal(song, fullUrl);
+
+        const slideBadgeHTML = song.slideNumber ? `<div class="slide-badge">Slajd #${song.slideNumber}</div>` : '';
 
         card.innerHTML = `
-          <img src="${thumbUrl}" alt="${song.name}" loading="lazy" />
-          <div class="song-title">${cleanTitle(song.name)}</div>
+          <div class="card-img-wrapper">
+            <img src="${thumbUrl}" alt="${song.cleanTitle}" loading="lazy" />
+            ${slideBadgeHTML}
+          </div>
+          <div class="song-info">
+            <div class="song-title">${song.cleanTitle}</div>
+            <div class="song-category">${song.category}</div>
+          </div>
         `;
 
         gridEl.appendChild(card);
       });
     }
 
-    // Usuwa rozszerzenia typu .jpg/.png z nazwy do czystego wyświetlania
-    function cleanTitle(filename) {
-      return filename.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+    function filterCategory(catName) {
+      currentCategory = catName;
+
+      // Aktualizacja wyglądu przycisków
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if (btn.innerText.includes(catName) || (catName === 'Ogólne' && btn.innerText.includes('Ogólne'))) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      renderSongs();
     }
 
     // Modal Viewer
-    function openModal(title, imageUrl) {
-      document.getElementById('modalTitle').innerText = cleanTitle(title);
+    function openModal(song, imageUrl) {
+      document.getElementById('modalTitle').innerText = song.cleanTitle;
+      document.getElementById('modalCategory').innerText = song.category;
+      document.getElementById('modalSlide').innerText = song.slideNumber ? `Slajd #${song.slideNumber}` : '';
+      
       document.getElementById('modalImage').src = imageUrl;
       document.getElementById('imageModal').classList.add('active');
     }
@@ -281,16 +503,12 @@
       document.getElementById('modalImage').src = '';
     }
 
-    // Wyszukiwarka
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      const term = e.target.value.toLowerCase();
-      const filtered = allSongs.filter(s => s.name.toLowerCase().includes(term));
-      renderSongs(filtered);
-    });
+    // Reakcja na wyszukiwanie
+    document.getElementById('searchInput').addEventListener('input', renderSongs);
 
-    // Rejestracja Service Workera dla PWA
+    // Rejestracja Service Workera
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW reg error:', err));
+      navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
     }
 
     // Start
