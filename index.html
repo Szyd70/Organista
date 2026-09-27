@@ -496,7 +496,7 @@
       width: 100%;
       height: 100%;
       border: none;
-      filter: invert(0.9) hue-rotate(180deg); /* Łagodne dopasowanie jasnej strony do ciemnego motywu */
+      filter: invert(0.9) hue-rotate(180deg);
     }
   </style>
 </head>
@@ -1020,25 +1020,31 @@
       const btnDzis = document.getElementById('btnCzytaniaDzis');
       const btnNiedziela = document.getElementById('btnCzytaniaNiedziela');
 
+      const formatDate = (date) => {
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      };
+
       if (type === 'dzis') {
-        iframe.src = 'https://niedziela.pl/liturgia';
+        const today = new Date();
+        iframe.src = `https://niezbednik.niedziela.pl/liturgia/${formatDate(today)}`;
+        
         btnDzis.style.background = '#f5f5f5';
         btnDzis.style.color = '#000';
         btnNiedziela.style.background = '#141414';
         btnNiedziela.style.color = '#fff';
       } else {
-        // Wyznaczanie daty najbliższej niedzieli
         const today = new Date();
-        const dayOfWeek = today.getDay();
-        const daysUntilSunday = (7 - dayOfWeek) % 7;
+        const dayOfWeek = today.getDay(); // 0 = niedziela
+        const daysUntilSunday = dayOfWeek === 0 ? 0 : (7 - dayOfWeek);
+        
         const sunday = new Date(today);
         sunday.setDate(today.getDate() + daysUntilSunday);
         
-        const yyyy = sunday.getFullYear();
-        const mm = String(sunday.getMonth() + 1).padStart(2, '0');
-        const dd = String(sunday.getDate()).padStart(2, '0');
+        iframe.src = `https://niezbednik.niedziela.pl/liturgia/${formatDate(sunday)}`;
         
-        iframe.src = `https://niedziela.pl/liturgia/${yyyy}-${mm}-${dd}`;
         btnNiedziela.style.background = '#f5f5f5';
         btnNiedziela.style.color = '#000';
         btnDzis.style.background = '#141414';
