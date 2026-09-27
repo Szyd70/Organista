@@ -1,15 +1,16 @@
 {
-  "name": "Śpiewnik Psie Pole",
-  "short_name": "Śpiewnik",
-  "start_url": "/index.html",
-  "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "short_name": "Nuty",
+  "name": "Nuty Organowe - Śpiewnik",
   "icons": [
     {
-      "src": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=192&q=80",
-      "sizes": "192x192",
-      "type": "image/jpeg"
+      "src": "https://lh3.googleusercontent.com/d/1W-9DISbSkwwwOUBXmiBIgcIKbdZqIHA-",
+      "type": "image/png",
+      "sizes": "192x192"
     }
-  ]
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "display": "standalone",
+  "orientation": "portrait"
 }
