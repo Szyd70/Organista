@@ -11,7 +11,7 @@
   <meta http-equiv="Expires" content="0" />
 
   <!-- PWA Setup -->
-  <link rel="manifest" href="manifest.json?v=3" />
+  <link rel="manifest" href="manifest.json?v=5" />
   <link rel="icon" type="image/svg+xml" href="/icon.svg" />
   <link rel="apple-touch-icon" href="/icon.svg" />
   <meta name="theme-color" content="#0a0a0a" />
@@ -21,6 +21,32 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Firebase SDK (v10 Modular) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Twoja podłączona konfiguracja Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyB4jsdsV2oV9KEXCyV4V15GbYviUZj-KcQ",
+      authDomain: "organista-3ba7a.firebaseapp.com",
+      projectId: "organista-3ba7a",
+      storageBucket: "organista-3ba7a.firebasestorage.app",
+      messagingSenderId: "567295688412",
+      appId: "1:567295688412:web:e06a665bf6091a9d127e19"
+    };
+
+    try {
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      window.db = db;
+      window.useFirestore = true;
+      console.log("Połączono z bazą Firestore (organista-3ba7a)!");
+    } catch(e) {
+      console.error("Błąd połączenia z Firestore:", e);
+    }
+  </script>
 
   <style>
     * {
@@ -39,7 +65,6 @@
       padding-bottom: 80px;
     }
 
-    /* Sacred Header */
     header {
       position: sticky;
       top: 0;
@@ -86,7 +111,6 @@
       transform: scale(0.95);
     }
 
-    /* Nawigacja Główna (Tabs) */
     .nav-tabs {
       display: flex;
       gap: 6px;
@@ -113,7 +137,6 @@
       color: #ffffff;
     }
 
-    /* Wyszukiwarka i Pasek Kategorii */
     .search-container {
       margin-bottom: 10px;
     }
@@ -156,7 +179,6 @@
       font-weight: 700;
     }
 
-    /* Układ Karty Pieśni */
     .song-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -208,7 +230,6 @@
       font-weight: 600;
     }
 
-    /* ŻĄDANIE 1: Duży tytuł na środku, kategoria i numer pod spodem */
     .song-info {
       padding: 12px 10px;
       display: flex;
@@ -258,7 +279,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* Modal / Viewer Nut */
     .modal {
       display: none;
       position: fixed;
@@ -311,7 +331,6 @@
       border-radius: 4px;
     }
 
-    /* Widoki Repertuaru i Panelu Admina */
     .section-view { display: none; }
     .section-view.active { display: block; }
 
@@ -380,49 +399,40 @@
       <button class="icon-btn" id="adminAuthBtn" onclick="toggleAdminLogin()">🔑 Admin</button>
     </div>
 
-    <!-- Zakładki Aplikacji -->
     <div class="nav-tabs">
-      <button class="tab-btn active" onclick="switchView('baza')">🎼 Baza Pieśni</button>
+      <button class="tab-btn active" onclick="switchView('baza')">🎼 Baza</button>
       <button class="tab-btn" onclick="switchView('repertuar')">📋 Na Teraz (<span id="repCount">0</span>)</button>
       <button class="tab-btn" onclick="switchView('archiwum')">📚 Archiwum</button>
       <button class="tab-btn" id="adminTabBtn" style="display:none;" onclick="switchView('admin')">⚙️ Admin</button>
     </div>
 
-    <!-- Wyszukiwarka i Pasek Kategorii (Widoczne w Bazie) -->
     <div id="bazaHeaderControls">
       <div class="search-container">
         <input type="text" id="searchInput" class="search-bar" placeholder="Szukaj pieśni lub slajdu..." />
       </div>
-
-      <div class="categories-bar" id="categoriesBar">
-        <!-- Generowane dynamicznie -->
-      </div>
+      <div class="categories-bar" id="categoriesBar"></div>
     </div>
   </header>
 
   <main>
-    <div id="status" class="status-msg">Ładowanie bazy pieśni...</div>
+    <div id="status" class="status-msg">Ładowanie bazy i synchronizacja z Firestore...</div>
 
-    <!-- WIDOK 1: BAZA PIEŚNI -->
     <div id="viewBaza" class="section-view active">
       <div id="songGrid" class="song-grid"></div>
     </div>
 
-    <!-- WIDOK 2: REPERTUAR NA TERAZ -->
     <div id="viewRepertuar" class="section-view">
-      <div style="display:flex; justify-size: space-between; gap:10px; margin-bottom:12px;">
-        <button class="icon-btn" style="flex:1;" onclick="clearCurrentRepertuar()">Wyszczyść zestaw</button>
+      <div style="display:flex; gap:10px; margin-bottom:12px;">
+        <button class="icon-btn" style="flex:1;" onclick="clearCurrentRepertuar()">Wyczyść zestaw</button>
         <button class="icon-btn" style="flex:1; background:#262626;" onclick="saveRepertuarToArchiwum()">💾 Zapisz do archiwum</button>
       </div>
       <div id="repertuarList"></div>
     </div>
 
-    <!-- WIDOK 3: ARCHIWUM REPERTUARÓW -->
     <div id="viewArchiwum" class="section-view">
       <div id="archiwumList"></div>
     </div>
 
-    <!-- WIDOK 4: PANEL ADMINA (Hasło: 0410) -->
     <div id="viewAdmin" class="section-view">
       <div class="admin-card">
         <h3 style="margin-bottom:12px;">➕ Dodaj Nową Kategorię</h3>
@@ -442,12 +452,11 @@
           <label>Wybierz Kategorię:</label>
           <select id="adminCatSelect" class="form-control"></select>
         </div>
-        <button class="btn-primary" onclick="assignCategoryToSong()">Zapisz Zmianę</button>
+        <button class="btn-primary" onclick="assignCategoryToSong()">Zapisz Zmianę w Firestore</button>
       </div>
     </div>
   </main>
 
-  <!-- MODAL VIEWER NUT -->
   <div id="imageModal" class="modal">
     <div class="modal-header">
       <div class="modal-center-info">
@@ -464,7 +473,9 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
     const FOLDER_ID = '1W-9DISbSkwwwOUBXmiBIgcIKbdZqIHA-';
     const API_KEY = 'AIzaSyDM3V9xJhY4AO2V3MaFN6MZIufi0OqGOCk';
 
@@ -472,14 +483,50 @@
     let currentCategory = 'Wszystkie';
     let isAdminLoggedIn = false;
 
-    // Lokalne struktury danych
-    let customCategories = JSON.parse(localStorage.getItem('customCategories')) || ['Adwent', 'Boże Narodzenie', 'Wielki Post', 'Wielkanoc', 'Maryjne', 'Ogólne'];
-    let songCategoryMap = JSON.parse(localStorage.getItem('songCategoryMap')) || {};
+    let customCategories = ['Adwent', 'Boże Narodzenie', 'Wielki Post', 'Wielkanoc', 'Maryjne', 'Ogólne'];
+    let songCategoryMap = {};
     let currentRepertuar = JSON.parse(localStorage.getItem('currentRepertuar')) || [];
-    let archiwumRepertuarow = JSON.parse(localStorage.getItem('archiwumRepertuarow')) || [];
+    let archiwumRepertuarow = [];
 
-    async function loadSongs() {
+    // Pobieranie danych z bazy Firestore
+    async function loadCloudData() {
+      if (!window.useFirestore || !window.db) return;
+      try {
+        const docRef = doc(window.db, "spiewnik", "config");
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.categories) customCategories = data.categories;
+          if (data.songCategoryMap) songCategoryMap = data.songCategoryMap;
+          if (data.archiwum) archiwumRepertuarow = data.archiwum;
+        }
+      } catch (e) {
+        console.error("Błąd pobierania danych z Firestore:", e);
+      }
+    }
+
+    // Zapisywanie stanu do bazy Firestore
+    async function saveCloudData() {
+      if (!window.useFirestore || !window.db) return;
+      try {
+        const docRef = doc(window.db, "spiewnik", "config");
+        await setDoc(docRef, {
+          categories: customCategories,
+          songCategoryMap: songCategoryMap,
+          archiwum: archiwumRepertuarow
+        });
+        console.log("Zapisano pomyślnie w Firestore!");
+      } catch (e) {
+        console.error("Błąd zapisu do Firestore:", e);
+      }
+    }
+
+    window.loadSongs = async function() {
       const statusEl = document.getElementById('status');
+      statusEl.style.display = 'block';
+
+      await loadCloudData();
+
       const cacheBuster = `&_cb=${Date.now()}`;
       const query = `'${FOLDER_ID}' in parents and trashed = false and (mimeType contains 'image/')`;
       const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,thumbnailLink)&pageSize=500&key=${API_KEY}${cacheBuster}`;
@@ -508,7 +555,6 @@
     function parseFileData(file) {
       let rawName = file.name.replace(/\.(jpg|jpeg|png|webp)$/i, '').trim();
 
-      // Wyciąganie Slajdu
       let slideNum = null;
       const slideMatch = rawName.match(/\((\d+)\)/) || rawName.match(/[-_]\s*(\d+)$/);
       if (slideMatch) {
@@ -516,7 +562,6 @@
         rawName = rawName.replace(slideMatch[0], '').trim();
       }
 
-      // Kategoria (Lokalna zmiana admina ma priorytet)
       let category = songCategoryMap[file.id];
       if (!category) {
         const lower = file.name.toLowerCase();
@@ -536,8 +581,7 @@
       };
     }
 
-    // RENDRUJ BAZĘ PIEŚNI
-    function renderSongs() {
+    window.renderSongs = function() {
       const gridEl = document.getElementById('songGrid');
       gridEl.innerHTML = '';
 
@@ -574,7 +618,6 @@
               </button>
             </div>
           </div>
-          <!-- ŻĄDANIE 1: Tytuł na środku, kategoria i numer pod spodem -->
           <div class="song-info" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')">
             <div class="song-title-center">${song.cleanTitle}</div>
             <div class="song-meta-row">
@@ -588,7 +631,6 @@
       });
     }
 
-    // SYSTEM KATEGORII
     function renderCategoriesBar() {
       const bar = document.getElementById('categoriesBar');
       let html = `<button class="cat-btn ${currentCategory === 'Wszystkie' ? 'active' : ''}" onclick="filterCategory('Wszystkie')">Wszystkie</button>`;
@@ -599,14 +641,13 @@
       bar.innerHTML = html;
     }
 
-    function filterCategory(cat) {
+    window.filterCategory = function(cat) {
       currentCategory = cat;
       renderCategoriesBar();
       renderSongs();
     }
 
-    // ZARZĄDZANIE REPERTUAREM NA TERAZ
-    function toggleRepertuar(songId) {
+    window.toggleRepertuar = function(songId) {
       const index = currentRepertuar.findIndex(s => s.id === songId);
       if (index > -1) {
         currentRepertuar.splice(index, 1);
@@ -624,7 +665,7 @@
       document.getElementById('repCount').innerText = currentRepertuar.length;
     }
 
-    function renderRepertuarList() {
+    window.renderRepertuarList = function() {
       const container = document.getElementById('repertuarList');
       if (currentRepertuar.length === 0) {
         container.innerHTML = '<div style="text-align:center; padding:40px; color:#525252;">Brak pieśni w zestawie na teraz.</div>';
@@ -651,7 +692,7 @@
       container.innerHTML = html;
     }
 
-    function clearCurrentRepertuar() {
+    window.clearCurrentRepertuar = function() {
       currentRepertuar = [];
       localStorage.setItem('currentRepertuar', JSON.stringify([]));
       updateRepertuarBadge();
@@ -659,9 +700,9 @@
       renderRepertuarList();
     }
 
-    function saveRepertuarToArchiwum() {
+    window.saveRepertuarToArchiwum = async function() {
       if (currentRepertuar.length === 0) return alert('Repertuar jest pusty!');
-      const name = prompt('Podaj nazwę dla tego repertuaru (np. Msza Św. 10:00 - Niedziela):');
+      const name = prompt('Podaj nazwę dla tego repertuaru (np. Msza Św. 10:00):');
       if (!name) return;
 
       archiwumRepertuarow.unshift({
@@ -671,15 +712,15 @@
         songs: [...currentRepertuar]
       });
 
-      localStorage.setItem('archiwumRepertuarow', JSON.stringify(archiwumRepertuarow));
-      alert('Zapisano w archiwum!');
+      await saveCloudData();
+      alert('Zapisano w archiwum w chmurze!');
       renderArchiwumList();
     }
 
-    function renderArchiwumList() {
+    window.renderArchiwumList = function() {
       const container = document.getElementById('archiwumList');
       if (archiwumRepertuarow.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:40px; color:#525252;">Brak zapisanych repertuarów w archiwum.</div>';
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:#525252;">Brak zapisanych repertuarów w chmurze.</div>';
         return;
       }
 
@@ -695,7 +736,7 @@
               ${item.songs.map(s => s.cleanTitle).join(' • ')}
             </div>
             <div style="display:flex; gap:8px;">
-              <button class="icon-btn" style="flex:1;" onclick="loadArchivedToCurrent(${item.id})">Wczytaj jako obecny</button>
+              <button class="icon-btn" style="flex:1;" onclick="loadArchivedToCurrent(${item.id})">Wczytaj zestaw</button>
               <button class="icon-btn" onclick="deleteArchived(${item.id})">Usuń</button>
             </div>
           </div>
@@ -704,7 +745,7 @@
       container.innerHTML = html;
     }
 
-    function loadArchivedToCurrent(id) {
+    window.loadArchivedToCurrent = function(id) {
       const item = archiwumRepertuarow.find(a => a.id === id);
       if (item) {
         currentRepertuar = [...item.songs];
@@ -714,19 +755,17 @@
       }
     }
 
-    function deleteArchived(id) {
+    window.deleteArchived = async function(id) {
       archiwumRepertuarow = archiwumRepertuarow.filter(a => a.id !== id);
-      localStorage.setItem('archiwumRepertuarow', JSON.stringify(archiwumRepertuarow));
+      await saveCloudData();
       renderArchiwumList();
     }
 
-    // PANEL ADMINA (Logowanie 0410)
-    function toggleAdminLogin() {
+    window.toggleAdminLogin = function() {
       if (isAdminLoggedIn) {
         switchView('admin');
         return;
       }
-
       const pass = prompt('Podaj hasło administratora:');
       if (pass === '0410') {
         isAdminLoggedIn = true;
@@ -738,48 +777,45 @@
       }
     }
 
-    function addNewCategory() {
+    window.addNewCategory = async function() {
       const input = document.getElementById('newCatInput');
       const name = input.value.trim();
       if (!name) return;
 
       if (!customCategories.includes(name)) {
         customCategories.push(name);
-        localStorage.setItem('customCategories', JSON.stringify(customCategories));
+        await saveCloudData();
         input.value = '';
         renderCategoriesBar();
         populateAdminDropdowns();
-        alert(`Dodano kategorię: ${name}`);
+        alert(`Dodano kategorię i zsynchronizowano z chmurą: ${name}`);
       }
     }
 
-    function assignCategoryToSong() {
+    window.assignCategoryToSong = async function() {
       const songId = document.getElementById('adminSongSelect').value;
       const cat = document.getElementById('adminCatSelect').value;
 
       songCategoryMap[songId] = cat;
-      localStorage.setItem('songCategoryMap', JSON.stringify(songCategoryMap));
+      await saveCloudData();
 
-      // Re-parse local data
       const song = allSongs.find(s => s.id === songId);
       if (song) song.category = cat;
 
       renderSongs();
-      alert('Zaktualizowano kategorię utworu!');
+      alert('Zaktualizowano przypisanie w bazie Firestore!');
     }
 
     function populateAdminDropdowns() {
       const songSelect = document.getElementById('adminSongSelect');
       const catSelect = document.getElementById('adminCatSelect');
-
       if (songSelect && catSelect) {
         songSelect.innerHTML = allSongs.map(s => `<option value="${s.id}">${s.cleanTitle}</option>`).join('');
         catSelect.innerHTML = customCategories.map(c => `<option value="${c}">${c}</option>`).join('');
       }
     }
 
-    // SWITCH VIEWS
-    function switchView(viewName) {
+    window.switchView = function(viewName) {
       document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
@@ -805,8 +841,7 @@
       event.target.classList.add('active');
     }
 
-    // MODAL
-    function openModal(title, category, slide, imageUrl) {
+    window.openModal = function(title, category, slide, imageUrl) {
       document.getElementById('modalTitle').innerText = title;
       document.getElementById('modalCategory').innerText = category;
       document.getElementById('modalSlide').innerText = slide ? `Slajd #${slide}` : '';
@@ -814,20 +849,19 @@
       document.getElementById('imageModal').classList.add('active');
     }
 
-    function closeModal() {
+    window.closeModal = function() {
       document.getElementById('imageModal').classList.remove('active');
       document.getElementById('modalImage').src = '';
     }
 
-    function forceRefresh() {
-      document.getElementById('status').style.display = 'block';
+    window.forceRefresh = function() {
       loadSongs();
     }
 
     document.getElementById('searchInput').addEventListener('input', renderSongs);
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js?v=' + Date.now()).then(reg => reg.update());
+      navigator.serviceWorker.register('/sw.js?v=' + Date.now()).catch(err => console.log('SW error:', err));
     }
 
     loadSongs();
