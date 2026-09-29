@@ -536,7 +536,7 @@
       <button class="icon-btn" id="adminAuthBtn" onclick="handleAdminToggle()">🔑 Zaloguj</button>
     </div>
 
-    <!-- Nawigacja Po Podstronach (Strona Główna domyślnie aktywna) -->
+    <!-- Nawigacja Po Podstronach -->
     <div class="nav-tabs">
       <button class="tab-btn active" id="tabHome" onclick="switchView('home')">🏠 Główna</button>
       <button class="tab-btn" id="tabBaza" onclick="switchView('baza')">🎼 Baza</button>
@@ -556,7 +556,7 @@
   <main>
     <div id="status" class="status-msg" style="display:none;">Ładowanie bazy i synchronizacja...</div>
 
-    <!-- PODSTRONA 1: STRONA GŁÓWNA (Domyślnie aktywna) -->
+    <!-- PODSTRONA 1: STRONA GŁÓWNA -->
     <div id="viewHome" class="section-view active">
       <div class="dashboard-hero">
         <h2>Laudate Dominum</h2>
@@ -599,10 +599,10 @@
       <div id="repertuarList"></div>
     </div>
 
-    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE (Pełny Tekst) -->
+    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE (OPOLKA PEŁNY TEKST) -->
     <div id="viewCzytania" class="section-view">
       <div class="readings-container" id="readingsContent">
-        <div style="text-align:center; padding: 40px; color:#a3a3a3;">Ładowanie treści czytań...</div>
+        <div style="text-align:center; padding: 40px; color:#a3a3a3;">Ładowanie czytań z serwisu Opoka...</div>
       </div>
     </div>
 
@@ -847,7 +847,7 @@
       renderSongs();
     }
 
-    // EDYCJA PIEŚNI (TYLKO DLA ZALOGOWANEGO ADMINA)
+    // EDYCJA PIEŚNI
     window.openEditModal = function(songId) {
       if (!isAdminLoggedIn) return;
 
@@ -1032,64 +1032,51 @@
       renderArchiwumList();
     }
 
-    // POBIERANIE CZYTAŃ LITURGICZNYCH (PEŁNE TEKSTY)
+    // POBIERANIE PEŁNYCH TEKSTÓW Z OPOKA.ORG.PL
     window.loadFullReadings = async function() {
       const container = document.getElementById('readingsContent');
-      container.innerHTML = '<div style="text-align:center; padding:40px; color:#a3a3a3;">Ładowanie czytań na dziś...</div>';
+      container.innerHTML = '<div style="text-align:center; padding:40px; color:#a3a3a3;">Ładowanie pełnej treści czytań z serwisu Opoka...</div>';
 
       try {
-        const response = await fetch('https://aaw.pl/api/czytania.php');
-        if (!response.ok) throw new Error('Błąd pobierania danych');
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
         
-        const data = await response.json();
-        let html = `<div class="readings-header-title">${data.tytul || 'Czytania Liturgiczne'}</div>`;
+        // Adres artykułu z liturgia dnia w serwisie Opoka
+        const targetUrl = `https://opoka.org.pl/liturgia/${year}${month}${day}`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
-        if (data.czytanie1) {
-          html += `
-            <div class="readings-card">
-              <h2>Pierwsze Czytanie</h2>
-              <h3>${data.czytanie1.siglum || ''}</h3>
-              <p>${data.czytanie1.tekst || ''}</p>
-            </div>
-          `;
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error('Nie udało się połączyć z serwerem');
+        
+        const json = await response.json();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(json.contents, 'text/html');
+
+        const articleContent = doc.querySelector('.article-body, .liturgia-body, main');
+
+        if (!articleContent) {
+          throw new Error('Nie odnaleziono treści na stronie Opoka');
         }
 
-        if (data.psalm) {
-          html += `
-            <div class="readings-card">
-              <h2>Psalm Responsoryjny</h2>
-              <h3>${data.psalm.siglum || ''}</h3>
-              <p><strong>Refren:</strong> ${data.psalm.refren || ''}</p><br>
-              <p>${data.psalm.tekst || ''}</p>
-            </div>
-          `;
-        }
+        // Czyszczenie zbędnych elementów przed wyświetleniem
+        articleContent.querySelectorAll('script, style, iframe, .ads, .banner').forEach(el => el.remove());
 
-        if (data.czytanie2) {
-          html += `
-            <div class="readings-card">
-              <h2>Drugie Czytanie</h2>
-              <h3>${data.czytanie2.siglum || ''}</h3>
-              <p>${data.czytanie2.tekst || ''}</p>
-            </div>
-          `;
-        }
-
-        if (data.ewangelia) {
-          html += `
-            <div class="readings-card">
-              <h2>Ewangelia</h2>
-              <h3>${data.ewangelia.siglum || ''}</h3>
-              <p>${data.ewangelia.tekst || ''}</p>
-            </div>
-          `;
-        }
-
-        container.innerHTML = html;
-      } catch (e) {
-        // Zapasowe awaryjne rozwiązanie (pełna ramka bez ograniczeń)
+        // Dodanie stylów dopasowanych do trybu ciemnego
+        let contentHtml = articleContent.innerHTML;
+        
         container.innerHTML = `
-          <iframe src="https://niedziela.pl/ewangelia" style="width:100%; height:75vh; border:none; border-radius:6px; background:#fff;"></iframe>
+          <div style="margin-bottom: 12px; font-size:0.8rem; color:#888; text-align:right;">Źródło: Opoka.org.pl (${day}.${month}.${year})</div>
+          <div class="opoka-parsed-content">${contentHtml}</div>
+        `;
+      } catch (e) {
+        console.error('Błąd pobierania czytań z Opoka:', e);
+        container.innerHTML = `
+          <div style="text-align:center; padding:20px; color:#ef4444;">
+            Nie udało się wczytać bezpośredniego tekstu z serwisu Opoka.<br>
+            <button class="icon-btn" style="margin-top:12px;" onclick="loadFullReadings()">Spróbuj ponownie</button>
+          </div>
         `;
       }
     }
