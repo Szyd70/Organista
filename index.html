@@ -485,20 +485,18 @@
     /* Style dla Podstrony Czytań */
     .readings-container {
       width: 100%;
-      min-height: 70vh;
+      height: 82vh;
       border: 1px solid #262626;
       border-radius: 8px;
-      padding: 16px;
+      overflow: hidden;
       background-color: #141414;
-      overflow-y: auto;
+      position: relative;
     }
-    .brewiarz-readings-body {
-      color: #d4d4d4;
-      line-height: 1.7;
-      font-size: 0.95rem;
-    }
-    .brewiarz-readings-body p {
-      margin-bottom: 12px;
+    .readings-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      filter: invert(0.9) hue-rotate(180deg);
     }
   </style>
 </head>
@@ -511,7 +509,7 @@
       <button class="icon-btn" id="adminAuthBtn" onclick="handleAdminToggle()">🔑 Zaloguj</button>
     </div>
 
-    <!-- Nawigacja Po Podstronach -->
+    <!-- Nawigacja Po Podstronach (Strona Główna domyślnie aktywna) -->
     <div class="nav-tabs">
       <button class="tab-btn active" id="tabHome" onclick="switchView('home')">🏠 Główna</button>
       <button class="tab-btn" id="tabBaza" onclick="switchView('baza')">🎼 Baza</button>
@@ -531,7 +529,7 @@
   <main>
     <div id="status" class="status-msg" style="display:none;">Ładowanie bazy i synchronizacja...</div>
 
-    <!-- PODSTRONA 1: STRONA GŁÓWNA -->
+    <!-- PODSTRONA 1: STRONA GŁÓWNA (Domyślnie aktywna) -->
     <div id="viewHome" class="section-view active">
       <div class="dashboard-hero">
         <h2>Laudate Dominum</h2>
@@ -574,10 +572,10 @@
       <div id="repertuarList"></div>
     </div>
 
-    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE (BREWIARZ.PL RSS) -->
+    <!-- PODSTRONA 4: CZYTANIA LITURGICZNE -->
     <div id="viewCzytania" class="section-view">
-      <div class="readings-container" id="readingsContent">
-        <div style="text-align:center; padding: 40px; color:#a3a3a3;">Ładowanie czytań mszalnych z serwisu Brewiarz.pl...</div>
+      <div class="readings-container">
+        <iframe id="readingsIframe" src="https://archibial.pl/czytania/"></iframe>
       </div>
     </div>
 
@@ -822,7 +820,7 @@
       renderSongs();
     }
 
-    // EDYCJA PIEŚNI
+    // EDYCJA PIEŚNI (TYLKO DLA ZALOGOWANEGO ADMINA)
     window.openEditModal = function(songId) {
       if (!isAdminLoggedIn) return;
 
@@ -929,7 +927,7 @@
               </div>
             </div>
             <div style="display:flex; gap:6px;">
-              <button class="edit-song-btn" onclick="openEditModal('${song.id}')">✏</button>
+              <button class="edit-song-btn" onclick="openEditModal('${song.id}')">✏️</button>
               <button class="icon-btn" onclick="toggleRepertuar('${song.id}')">Usuń</button>
             </div>
           </div>
@@ -1007,58 +1005,6 @@
       renderArchiwumList();
     }
 
-    // POBIERANIE PEŁNYCH TEKSTÓW Z OFICJALNEGO RSS BREWIARZ.PL
-    window.loadFullReadings = async function() {
-      const container = document.getElementById('readingsContent');
-      container.innerHTML = '<div style="text-align:center; padding:40px; color:#a3a3a3;">Ładowanie czytań mszalnych z Brewiarz.pl...</div>';
-
-      try {
-        const targetUrl = 'https://brewiarz.pl/rss/msza.xml';
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error('Błąd połączenia z serwerem');
-
-        const json = await response.json();
-        
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(json.contents, 'text/xml');
-
-        const item = xmlDoc.querySelector('item');
-        if (!item) throw new Error('Brak danych w kanale RSS');
-
-        const title = item.querySelector('title') ? item.querySelector('title').textContent : 'Czytania na dziś';
-        const description = item.querySelector('description') ? item.querySelector('description').textContent : '';
-
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = description;
-        tempDiv.querySelectorAll('a, img').forEach(el => el.remove());
-
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('pl-PL');
-
-        container.innerHTML = `
-          <div style="margin-bottom: 16px; border-bottom: 1px solid #262626; padding-bottom: 12px; text-align: center;">
-            <h2 style="font-family:'Playfair Display',serif; color:#f5f5f5; font-size:1.3rem; margin-bottom: 4px;">${title}</h2>
-            <div style="font-size:0.75rem; color:#22c55e; font-weight:700; text-transform:uppercase; letter-spacing: 0.5px;">
-              Źródło: Brewiarz.pl (${dateStr})
-            </div>
-          </div>
-          <div class="brewiarz-readings-body">
-            ${tempDiv.innerHTML}
-          </div>
-        `;
-      } catch (e) {
-        console.error('Błąd pobierania RSS z Brewiarz.pl:', e);
-        container.innerHTML = `
-          <div style="text-align:center; padding:20px; color:#ef4444;">
-            Nie udało się wczytać czytań z serwisu Brewiarz.pl.<br>
-            <button class="icon-btn" style="margin-top:12px;" onclick="loadFullReadings()">↻ Spróbuj ponownie</button>
-          </div>
-        `;
-      }
-    }
-
     // NAWIGACJA
     window.switchView = function(viewName) {
       document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
@@ -1084,7 +1030,6 @@
         document.getElementById('viewCzytania').classList.add('active');
         document.getElementById('tabCzytania').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'none';
-        loadFullReadings();
       }
       if (viewName === 'archiwum') {
         document.getElementById('viewArchiwum').classList.add('active');
