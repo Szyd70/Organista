@@ -135,7 +135,7 @@
 
     .categories-bar, .date-bar {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       overflow-x: auto;
       padding-bottom: 4px;
       scrollbar-width: none;
@@ -146,16 +146,19 @@
       background-color: #141414;
       color: #a3a3a3;
       border: 1px solid #262626;
-      padding: 6px 12px;
+      padding: 8px 16px;
       border-radius: 16px;
-      font-size: 0.78rem;
+      font-size: 0.85rem;
       white-space: nowrap;
       cursor: pointer;
+      flex: 1;
+      text-align: center;
     }
     .cat-btn.active, .date-btn.active {
       background-color: #f5f5f5;
       color: #0a0a0a;
       font-weight: 700;
+      border-color: #f5f5f5;
     }
 
     .back-btn {
@@ -524,7 +527,7 @@
   <main>
     <div id="status" class="status-msg" style="display:none;">Ładowanie bazy i synchronizacja...</div>
 
-    <!-- PODSTRONA 1: STRONA GŁÓWNA (Domyślnie aktywna) -->
+    <!-- PODSTRONA 1: STRONA GŁÓWNA -->
     <div id="viewHome" class="section-view active">
       <div class="dashboard-hero">
         <h2>Laudate Dominum</h2>
@@ -566,9 +569,9 @@
     <!-- PODSTRONA: PROPOZYCJE ŚPIEWÓW (MusicamSacram) -->
     <div id="viewPropozycje" class="section-view">
       <button class="back-btn" onclick="switchView('home')">⬅ Powrót do Strony Główniej</button>
-      <h3 style="font-family:'Cinzel',serif; font-size:1.1rem; margin-bottom:10px;">Propozycje MusicamSacram</h3>
+      <h3 style="font-family:'Cinzel',serif; font-size:1.1rem; margin-bottom:12px;">Propozycje MusicamSacram</h3>
       
-      <!-- Pasek Wyboru Dat (-1 dzień do +7 dni) -->
+      <!-- Pasek Wyboru Dat: Dziś, Jutro, Niedziela -->
       <div class="date-bar" id="dateBar"></div>
 
       <div id="propozycjeContent" style="margin-top:16px;">
@@ -838,31 +841,38 @@
       renderSongs();
     }
 
-    // MODUŁ MUSICAM SACRAM (PROPOZYCJE +7 DNI)
+    // MODUŁ MUSICAM SACRAM (PROPOZYCJE: DZIŚ, JUTRO, NIEDZIELA)
     function renderDateBar() {
       const container = document.getElementById('dateBar');
       const today = new Date();
-      let html = '';
 
-      for (let i = -1; i <= 7; i++) {
-        const d = new Date(today);
-        d.setDate(today.getDate() + i);
+      const dToday = new Date(today);
+      
+      const dTomorrow = new Date(today);
+      dTomorrow.setDate(today.getDate() + 1);
 
-        const isoDate = d.toISOString().split('T')[0];
-        let label = '';
-        if (i === -1) label = 'Wczoraj';
-        else if (i === 0) label = 'Dziś';
-        else if (i === 1) label = 'Jutro';
-        else {
-          const days = ['Niedz.', 'Pon.', 'Wt.', 'Śr.', 'Czw.', 'Pt.', 'Sob.'];
-          label = `${days[d.getDay()]} (${d.getDate()}.${d.getMonth() + 1})`;
-        }
+      const dSunday = new Date(today);
+      const dayOfWeek = today.getDay(); // 0 = Niedziela
+      const daysUntilSunday = (dayOfWeek === 0) ? 0 : (7 - dayOfWeek);
+      dSunday.setDate(today.getDate() + daysUntilSunday);
 
-        if (i === 0 && !selectedSuggestionDate) selectedSuggestionDate = isoDate;
+      const dates = [
+        { label: 'Dziś', date: dToday },
+        { label: 'Jutro', date: dTomorrow },
+        { label: `Niedziela (${dSunday.getDate()}.${dSunday.getMonth() + 1})`, date: dSunday }
+      ];
 
-        const isActive = (selectedSuggestionDate === isoDate);
-        html += `<button class="date-btn ${isActive ? 'active' : ''}" onclick="loadSuggestionsForDate('${isoDate}')">${label}</button>`;
+      if (!selectedSuggestionDate) {
+        selectedSuggestionDate = dToday.toISOString().split('T')[0];
       }
+
+      let html = '';
+      dates.forEach(item => {
+        const isoDate = item.date.toISOString().split('T')[0];
+        const isActive = (selectedSuggestionDate === isoDate);
+        html += `<button class="date-btn ${isActive ? 'active' : ''}" onclick="loadSuggestionsForDate('${isoDate}')">${item.label}</button>`;
+      });
+
       container.innerHTML = html;
       if (selectedSuggestionDate) loadSuggestionsForDate(selectedSuggestionDate);
     }
@@ -886,7 +896,6 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(data.contents, 'text/html');
 
-        const headers = doc.querySelectorAll('h3, h4, .section-title');
         const tables = doc.querySelectorAll('table');
 
         if (tables.length === 0) {
@@ -915,7 +924,6 @@
             if (cells.length > 0) {
               const rawTitle = cells[0].textContent.trim();
               if (rawTitle && !rawTitle.toLowerCase().includes('tytuł')) {
-                // Szukanie pieśni w lokalnej bazie z Google Drive
                 const matchedSong = allSongs.find(s => 
                   s.cleanTitle.toLowerCase().includes(rawTitle.toLowerCase()) ||
                   rawTitle.toLowerCase().includes(s.cleanTitle.toLowerCase())
@@ -947,7 +955,7 @@
 
       } catch (err) {
         console.error("Błąd pobierania MusicamSacram:", err);
-        container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">Nie udało się pobrać propozycji na ten dzień. Sklonuj zestaw lub sprawdź połączenie.</div>`;
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">Nie udało się pobrać propozycji na ten dzień. Sprawdź połączenie internetowe.</div>`;
       }
     }
 
