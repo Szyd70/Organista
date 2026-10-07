@@ -11,7 +11,7 @@
   <meta http-equiv="Expires" content="0" />
 
   <!-- PWA Setup -->
-  <link rel="manifest" href="manifest.json?v=7" />
+  <link rel="manifest" href="manifest.json?v=8" />
   <link rel="icon" type="image/svg+xml" href="/icon.svg" />
   <link rel="apple-touch-icon" href="/icon.svg" />
   <meta name="theme-color" content="#0a0a0a" />
@@ -80,7 +80,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
     }
 
     h1 {
@@ -116,39 +115,8 @@
       border-color: #22c55e;
     }
 
-    /* Nawigacja po Podstronach */
-    .nav-tabs {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 12px;
-      background-color: #141414;
-      padding: 4px;
-      border-radius: 8px;
-      border: 1px solid #262626;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .nav-tabs::-webkit-scrollbar { display: none; }
-
-    .tab-btn {
-      flex: 1;
-      background: none;
-      border: none;
-      color: #888888;
-      padding: 10px 6px;
-      font-size: 0.76rem;
-      font-weight: 600;
-      border-radius: 6px;
-      cursor: pointer;
-      text-align: center;
-      white-space: nowrap;
-    }
-    .tab-btn.active {
-      background-color: #262626;
-      color: #ffffff;
-    }
-
     .search-container {
+      margin-top: 10px;
       margin-bottom: 10px;
     }
     .search-bar {
@@ -165,29 +133,48 @@
       border-color: #d4d4d4;
     }
 
-    .categories-bar {
+    .categories-bar, .date-bar {
       display: flex;
       gap: 6px;
       overflow-x: auto;
       padding-bottom: 4px;
       scrollbar-width: none;
     }
-    .categories-bar::-webkit-scrollbar { display: none; }
+    .categories-bar::-webkit-scrollbar, .date-bar::-webkit-scrollbar { display: none; }
 
-    .cat-btn {
+    .cat-btn, .date-btn {
       background-color: #141414;
       color: #a3a3a3;
       border: 1px solid #262626;
-      padding: 5px 12px;
+      padding: 6px 12px;
       border-radius: 16px;
       font-size: 0.78rem;
       white-space: nowrap;
       cursor: pointer;
     }
-    .cat-btn.active {
+    .cat-btn.active, .date-btn.active {
       background-color: #f5f5f5;
       color: #0a0a0a;
       font-weight: 700;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: #141414;
+      border: 1px solid #333333;
+      color: #a3a3a3;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      cursor: pointer;
+    }
+    .back-btn:active {
+      background-color: #262626;
+      color: #fff;
     }
 
     .section-view { display: none; }
@@ -221,13 +208,13 @@
       margin-bottom: 24px;
     }
     @media(min-width: 600px) {
-      .quick-actions-grid { grid-template-columns: repeat(4, 1fr); }
+      .quick-actions-grid { grid-template-columns: repeat(3, 1fr); }
     }
     .action-card {
       background-color: #141414;
       border: 1px solid #262626;
       border-radius: 10px;
-      padding: 16px;
+      padding: 18px 12px;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -241,7 +228,7 @@
       margin-bottom: 8px;
     }
     .action-card .title {
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       font-weight: 700;
       color: #ffffff;
     }
@@ -299,6 +286,7 @@
       padding: 4px 8px;
       font-size: 0.7rem;
       font-weight: 600;
+      cursor: pointer;
     }
     .edit-song-btn {
       display: none;
@@ -475,6 +463,22 @@
       margin-bottom: 16px;
     }
 
+    .suggestion-group {
+      margin-bottom: 20px;
+      background: #121212;
+      border: 1px solid #262626;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .suggestion-group-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.95rem;
+      color: #f5f5f5;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #262626;
+      padding-bottom: 6px;
+    }
+
     .status-msg {
       text-align: center;
       padding: 40px 16px;
@@ -509,15 +513,6 @@
       <button class="icon-btn" id="adminAuthBtn" onclick="handleAdminToggle()">🔑 Zaloguj</button>
     </div>
 
-    <!-- Nawigacja Po Podstronach (Strona Główna domyślnie aktywna) -->
-    <div class="nav-tabs">
-      <button class="tab-btn active" id="tabHome" onclick="switchView('home')">🏠 Główna</button>
-      <button class="tab-btn" id="tabBaza" onclick="switchView('baza')">🎼 Baza</button>
-      <button class="tab-btn" id="tabRepertuar" onclick="switchView('repertuar')">📋 Repertuar (<span id="repCount">0</span>)</button>
-      <button class="tab-btn" id="tabCzytania" onclick="switchView('czytania')">📖 Czytania</button>
-      <button class="tab-btn" id="tabArchiwum" onclick="switchView('archiwum')">📚 Archiwum</button>
-    </div>
-
     <div id="bazaHeaderControls" style="display:none;">
       <div class="search-container">
         <input type="text" id="searchInput" class="search-bar" placeholder="Szukaj pieśni lub slajdu..." />
@@ -537,15 +532,19 @@
         <button class="btn-primary" onclick="switchView('repertuar')">Otwórz Bieżący Repertuar (<span id="dashRepCount">0</span>)</button>
       </div>
 
-      <h3 style="font-family:'Cinzel',serif; font-size:1rem; margin-bottom:12px; color:#a3a3a3;">Na skróty</h3>
+      <h3 style="font-family:'Cinzel',serif; font-size:1rem; margin-bottom:12px; color:#a3a3a3;">Menu Główne</h3>
       <div class="quick-actions-grid">
         <div class="action-card" onclick="switchView('baza')">
           <div class="icon">🎼</div>
           <div class="title">Baza Pieśni</div>
         </div>
+        <div class="action-card" onclick="switchView('propozycje')">
+          <div class="icon">✨</div>
+          <div class="title">Propozycje Śpiewów</div>
+        </div>
         <div class="action-card" onclick="switchView('repertuar')">
           <div class="icon">📋</div>
-          <div class="title">Repertuar</div>
+          <div class="title">Repertuar (<span id="menuRepCount">0</span>)</div>
         </div>
         <div class="action-card" onclick="switchView('czytania')">
           <div class="icon">📖</div>
@@ -560,11 +559,26 @@
 
     <!-- PODSTRONA 2: BAZA PIEŚNI -->
     <div id="viewBaza" class="section-view">
+      <button class="back-btn" onclick="switchView('home')">⬅ Powrót do Strony Główniej</button>
       <div id="songGrid" class="song-grid"></div>
+    </div>
+
+    <!-- PODSTRONA: PROPOZYCJE ŚPIEWÓW (MusicamSacram) -->
+    <div id="viewPropozycje" class="section-view">
+      <button class="back-btn" onclick="switchView('home')">⬅ Powrót do Strony Główniej</button>
+      <h3 style="font-family:'Cinzel',serif; font-size:1.1rem; margin-bottom:10px;">Propozycje MusicamSacram</h3>
+      
+      <!-- Pasek Wyboru Dat (-1 dzień do +7 dni) -->
+      <div class="date-bar" id="dateBar"></div>
+
+      <div id="propozycjeContent" style="margin-top:16px;">
+        <div style="text-align:center; padding:30px; color:#737373;">Wybierz dzień z paska powyżej, aby wczytać propozycje...</div>
+      </div>
     </div>
 
     <!-- PODSTRONA 3: BIEŻĄCY REPERTUAR -->
     <div id="viewRepertuar" class="section-view">
+      <button class="back-btn" onclick="switchView('home')">⬅ Powrót do Strony Główniej</button>
       <div style="display:flex; gap:10px; margin-bottom:12px;">
         <button class="icon-btn" style="flex:1;" onclick="clearCurrentRepertuar()">Wyczyść zestaw</button>
         <button class="icon-btn" style="flex:1; background:#262626;" onclick="saveRepertuarToArchiwum()">💾 Zapisz do archiwum</button>
@@ -574,6 +588,7 @@
 
     <!-- PODSTRONA 4: CZYTANIA LITURGICZNE -->
     <div id="viewCzytania" class="section-view">
+      <button class="back-btn" onclick="switchView('home')">⬅ Powrót do Strony Główniej</button>
       <div class="readings-container">
         <iframe id="readingsIframe" src="https://archibial.pl/czytania/"></iframe>
       </div>
@@ -581,6 +596,7 @@
 
     <!-- PODSTRONA 5: ARCHIWUM REPERTUARÓW -->
     <div id="viewArchiwum" class="section-view">
+      <button class="back-btn" onclick="switchView('home')">⬅ Powrót do Strony Główniej</button>
       <div id="archiwumList"></div>
     </div>
   </main>
@@ -638,6 +654,7 @@
     let currentCategory = 'Wszystkie';
     let editingSongId = null;
     let isAdminLoggedIn = false;
+    let selectedSuggestionDate = null;
 
     let customCategories = ['Adwent', 'Boże Narodzenie', 'Wielki Post', 'Wielkanoc', 'Maryjne', 'Ogólne'];
     let songCategoryMap = {};
@@ -719,6 +736,7 @@
         renderCategoriesBar();
         renderSongs();
         updateRepertuarBadge();
+        renderDateBar();
       } catch (err) {
         console.error(`Błąd ładowania pieśni: ${err.message}`);
       }
@@ -820,6 +838,119 @@
       renderSongs();
     }
 
+    // MODUŁ MUSICAM SACRAM (PROPOZYCJE +7 DNI)
+    function renderDateBar() {
+      const container = document.getElementById('dateBar');
+      const today = new Date();
+      let html = '';
+
+      for (let i = -1; i <= 7; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+
+        const isoDate = d.toISOString().split('T')[0];
+        let label = '';
+        if (i === -1) label = 'Wczoraj';
+        else if (i === 0) label = 'Dziś';
+        else if (i === 1) label = 'Jutro';
+        else {
+          const days = ['Niedz.', 'Pon.', 'Wt.', 'Śr.', 'Czw.', 'Pt.', 'Sob.'];
+          label = `${days[d.getDay()]} (${d.getDate()}.${d.getMonth() + 1})`;
+        }
+
+        if (i === 0 && !selectedSuggestionDate) selectedSuggestionDate = isoDate;
+
+        const isActive = (selectedSuggestionDate === isoDate);
+        html += `<button class="date-btn ${isActive ? 'active' : ''}" onclick="loadSuggestionsForDate('${isoDate}')">${label}</button>`;
+      }
+      container.innerHTML = html;
+      if (selectedSuggestionDate) loadSuggestionsForDate(selectedSuggestionDate);
+    }
+
+    window.loadSuggestionsForDate = async function(dateStr) {
+      selectedSuggestionDate = dateStr;
+      renderDateBar();
+
+      const container = document.getElementById('propozycjeContent');
+      container.innerHTML = `<div style="text-align:center; padding:30px; color:#737373;">Pobieranie propozycji śpiewów na ${dateStr}...</div>`;
+
+      const targetUrl = `https://musicamsacram.pl/propozycje-spiewow/dzien/${dateStr}`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
+      try {
+        const res = await fetch(proxyUrl);
+        const data = await res.json();
+
+        if (!data || !data.contents) throw new Error("Brak danych");
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data.contents, 'text/html');
+
+        const headers = doc.querySelectorAll('h3, h4, .section-title');
+        const tables = doc.querySelectorAll('table');
+
+        if (tables.length === 0) {
+          container.innerHTML = `<div style="text-align:center; padding:30px; color:#737373;">Brak propozycji śpiewów na ten dzień w serwisie MusicamSacram.</div>`;
+          return;
+        }
+
+        let html = '';
+
+        tables.forEach((table, idx) => {
+          let sectionTitle = `Część Mszy #${idx + 1}`;
+          let prevElem = table.previousElementSibling;
+          while (prevElem) {
+            if (['H2', 'H3', 'H4', 'DIV'].includes(prevElem.tagName) && prevElem.textContent.trim()) {
+              sectionTitle = prevElem.textContent.trim();
+              break;
+            }
+            prevElem = prevElem.previousElementSibling;
+          }
+
+          html += `<div class="suggestion-group"><div class="suggestion-group-title">${sectionTitle}</div>`;
+
+          const rows = table.querySelectorAll('tbody tr');
+          rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 0) {
+              const rawTitle = cells[0].textContent.trim();
+              if (rawTitle && !rawTitle.toLowerCase().includes('tytuł')) {
+                // Szukanie pieśni w lokalnej bazie z Google Drive
+                const matchedSong = allSongs.find(s => 
+                  s.cleanTitle.toLowerCase().includes(rawTitle.toLowerCase()) ||
+                  rawTitle.toLowerCase().includes(s.cleanTitle.toLowerCase())
+                );
+
+                const inRep = matchedSong ? currentRepertuar.some(r => r.id === matchedSong.id) : false;
+
+                html += `
+                  <div class="list-item" style="margin-bottom:6px; padding:8px 12px;">
+                    <div>
+                      <strong style="font-size:0.95rem; color:#fff;">${rawTitle}</strong>
+                      ${matchedSong ? `<div style="font-size:0.75rem; color:#22c55e;">✓ Dostępne w Twojej bazie</div>` : `<div style="font-size:0.75rem; color:#737373;">Brak w bazie nut</div>`}
+                    </div>
+                    ${matchedSong ? `
+                      <button class="add-rep-btn" onclick="toggleRepertuar('${matchedSong.id}')">
+                        ${inRep ? '✓ W zestawie' : '+ Dodaj do rep.'}
+                      </button>
+                    ` : ''}
+                  </div>
+                `;
+              }
+            }
+          });
+
+          html += `</div>`;
+        });
+
+        container.innerHTML = html;
+
+      } catch (err) {
+        console.error("Błąd pobierania MusicamSacram:", err);
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">Nie udało się pobrać propozycji na ten dzień. Sklonuj zestaw lub sprawdź połączenie.</div>`;
+      }
+    }
+
     // EDYCJA PIEŚNI (TYLKO DLA ZALOGOWANEGO ADMINA)
     window.openEditModal = function(songId) {
       if (!isAdminLoggedIn) return;
@@ -898,11 +1029,12 @@
       updateRepertuarBadge();
       renderSongs();
       renderRepertuarList();
+      if (selectedSuggestionDate) loadSuggestionsForDate(selectedSuggestionDate);
     }
 
     function updateRepertuarBadge() {
       const count = currentRepertuar.length;
-      document.getElementById('repCount').innerText = count;
+      document.getElementById('menuRepCount').innerText = count;
       document.getElementById('dashRepCount').innerText = count;
     }
 
@@ -1008,32 +1140,30 @@
     // NAWIGACJA
     window.switchView = function(viewName) {
       document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
       if (viewName === 'home') {
         document.getElementById('viewHome').classList.add('active');
-        document.getElementById('tabHome').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'none';
       }
       if (viewName === 'baza') {
         document.getElementById('viewBaza').classList.add('active');
-        document.getElementById('tabBaza').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'block';
+      }
+      if (viewName === 'propozycje') {
+        document.getElementById('viewPropozycje').classList.add('active');
+        document.getElementById('bazaHeaderControls').style.display = 'none';
       }
       if (viewName === 'repertuar') {
         document.getElementById('viewRepertuar').classList.add('active');
-        document.getElementById('tabRepertuar').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'none';
         renderRepertuarList();
       }
       if (viewName === 'czytania') {
         document.getElementById('viewCzytania').classList.add('active');
-        document.getElementById('tabCzytania').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'none';
       }
       if (viewName === 'archiwum') {
         document.getElementById('viewArchiwum').classList.add('active');
-        document.getElementById('tabArchiwum').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'none';
         renderArchiwumList();
       }
