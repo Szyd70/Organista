@@ -80,6 +80,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 12px;
     }
 
     h1 {
@@ -115,8 +116,39 @@
       border-color: #22c55e;
     }
 
+    /* Nawigacja po Podstronach */
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+      background-color: #141414;
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid #262626;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #888888;
+      padding: 10px 6px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background-color: #262626;
+      color: #ffffff;
+    }
+
     .search-container {
-      margin-top: 10px;
       margin-bottom: 10px;
     }
     .search-bar {
@@ -161,25 +193,6 @@
       border-color: #f5f5f5;
     }
 
-    .back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background-color: #141414;
-      border: 1px solid #333333;
-      color: #a3a3a3;
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-bottom: 16px;
-      cursor: pointer;
-    }
-    .back-btn:active {
-      background-color: #262626;
-      color: #fff;
-    }
-
     .section-view { display: none; }
     .section-view.active { display: block; }
 
@@ -217,7 +230,7 @@
       background-color: #141414;
       border: 1px solid #262626;
       border-radius: 10px;
-      padding: 18px 12px;
+      padding: 16px;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -231,7 +244,7 @@
       margin-bottom: 8px;
     }
     .action-card .title {
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       font-weight: 700;
       color: #ffffff;
     }
@@ -516,6 +529,16 @@
       <button class="icon-btn" id="adminAuthBtn" onclick="handleAdminToggle()">🔑 Zaloguj</button>
     </div>
 
+    <!-- Nawigacja Po Podstronach -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" id="tabHome" onclick="switchView('home')">🏠 Główna</button>
+      <button class="tab-btn" id="tabBaza" onclick="switchView('baza')">🎼 Baza</button>
+      <button class="tab-btn" id="tabPropozycje" onclick="switchView('propozycje')">✨ Propozycje</button>
+      <button class="tab-btn" id="tabRepertuar" onclick="switchView('repertuar')">📋 Repertuar (<span id="repCount">0</span>)</button>
+      <button class="tab-btn" id="tabCzytania" onclick="switchView('czytania')">📖 Czytania</button>
+      <button class="tab-btn" id="tabArchiwum" onclick="switchView('archiwum')">📚 Archiwum</button>
+    </div>
+
     <div id="bazaHeaderControls" style="display:none;">
       <div class="search-container">
         <input type="text" id="searchInput" class="search-bar" placeholder="Szukaj pieśni lub slajdu..." />
@@ -535,7 +558,7 @@
         <button class="btn-primary" onclick="switchView('repertuar')">Otwórz Bieżący Repertuar (<span id="dashRepCount">0</span>)</button>
       </div>
 
-      <h3 style="font-family:'Cinzel',serif; font-size:1rem; margin-bottom:12px; color:#a3a3a3;">Menu Główne</h3>
+      <h3 style="font-family:'Cinzel',serif; font-size:1rem; margin-bottom:12px; color:#a3a3a3;">Na skróty</h3>
       <div class="quick-actions-grid">
         <div class="action-card" onclick="switchView('baza')">
           <div class="icon">🎼</div>
@@ -543,11 +566,11 @@
         </div>
         <div class="action-card" onclick="switchView('propozycje')">
           <div class="icon">✨</div>
-          <div class="title">Propozycje Śpiewów</div>
+          <div class="title">Propozycje</div>
         </div>
         <div class="action-card" onclick="switchView('repertuar')">
           <div class="icon">📋</div>
-          <div class="title">Repertuar (<span id="menuRepCount">0</span>)</div>
+          <div class="title">Repertuar</div>
         </div>
         <div class="action-card" onclick="switchView('czytania')">
           <div class="icon">📖</div>
@@ -562,13 +585,11 @@
 
     <!-- PODSTRONA 2: BAZA PIEŚNI -->
     <div id="viewBaza" class="section-view">
-      <button class="back-btn" onclick="switchView('home')">⬅ Powrót do Strony Główniej</button>
       <div id="songGrid" class="song-grid"></div>
     </div>
 
     <!-- PODSTRONA: PROPOZYCJE ŚPIEWÓW (MusicamSacram) -->
     <div id="viewPropozycje" class="section-view">
-      <button class="back-btn" onclick="switchView('home')">⬅ Powrót do Strony Główniej</button>
       <h3 style="font-family:'Cinzel',serif; font-size:1.1rem; margin-bottom:12px;">Propozycje MusicamSacram</h3>
       
       <!-- Pasek Wyboru Dat: Dziś, Jutro, Niedziela -->
@@ -581,7 +602,6 @@
 
     <!-- PODSTRONA 3: BIEŻĄCY REPERTUAR -->
     <div id="viewRepertuar" class="section-view">
-      <button class="back-btn" onclick="switchView('home')">⬅ Powrót do Strony Główniej</button>
       <div style="display:flex; gap:10px; margin-bottom:12px;">
         <button class="icon-btn" style="flex:1;" onclick="clearCurrentRepertuar()">Wyczyść zestaw</button>
         <button class="icon-btn" style="flex:1; background:#262626;" onclick="saveRepertuarToArchiwum()">💾 Zapisz do archiwum</button>
@@ -591,7 +611,6 @@
 
     <!-- PODSTRONA 4: CZYTANIA LITURGICZNE -->
     <div id="viewCzytania" class="section-view">
-      <button class="back-btn" onclick="switchView('home')">⬅ Powrót do Strony Główniej</button>
       <div class="readings-container">
         <iframe id="readingsIframe" src="https://archibial.pl/czytania/"></iframe>
       </div>
@@ -599,7 +618,6 @@
 
     <!-- PODSTRONA 5: ARCHIWUM REPERTUARÓW -->
     <div id="viewArchiwum" class="section-view">
-      <button class="back-btn" onclick="switchView('home')">⬅ Powrót do Strony Główniej</button>
       <div id="archiwumList"></div>
     </div>
   </main>
@@ -664,7 +682,7 @@
     let currentRepertuar = JSON.parse(localStorage.getItem('currentRepertuar')) || [];
     let archiwumRepertuarow = [];
 
-    // Funkcja wyliczająca stabilny link do obrazu (z bezpośrednim wywołaniem API Drive + fallback)
+    // Generator linków miniatur i obrazów Google Drive z wbudowanym czyszczeniem oraz fallbackiem
     function getImageUrl(fileId, width = 1000) {
       return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${width}`;
     }
@@ -1050,7 +1068,7 @@
 
     function updateRepertuarBadge() {
       const count = currentRepertuar.length;
-      document.getElementById('menuRepCount').innerText = count;
+      document.getElementById('repCount').innerText = count;
       document.getElementById('dashRepCount').innerText = count;
     }
 
@@ -1154,30 +1172,37 @@
     // NAWIGACJA
     window.switchView = function(viewName) {
       document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
       if (viewName === 'home') {
         document.getElementById('viewHome').classList.add('active');
+        document.getElementById('tabHome').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'none';
       }
       if (viewName === 'baza') {
         document.getElementById('viewBaza').classList.add('active');
+        document.getElementById('tabBaza').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'block';
       }
       if (viewName === 'propozycje') {
         document.getElementById('viewPropozycje').classList.add('active');
+        document.getElementById('tabPropozycje').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'none';
       }
       if (viewName === 'repertuar') {
         document.getElementById('viewRepertuar').classList.add('active');
+        document.getElementById('tabRepertuar').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'none';
         renderRepertuarList();
       }
       if (viewName === 'czytania') {
         document.getElementById('viewCzytania').classList.add('active');
+        document.getElementById('tabCzytania').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'none';
       }
       if (viewName === 'archiwum') {
         document.getElementById('viewArchiwum').classList.add('active');
+        document.getElementById('tabArchiwum').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'none';
         renderArchiwumList();
       }
