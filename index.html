@@ -11,7 +11,7 @@
   <meta http-equiv="Expires" content="0" />
 
   <!-- PWA Setup -->
-  <link rel="manifest" href="manifest.json?v=9" />
+  <link rel="manifest" href="manifest.json?v=7" />
   <link rel="icon" type="image/svg+xml" href="/icon.svg" />
   <link rel="apple-touch-icon" href="/icon.svg" />
   <meta name="theme-color" content="#0a0a0a" />
@@ -682,15 +682,6 @@
     let currentRepertuar = JSON.parse(localStorage.getItem('currentRepertuar')) || [];
     let archiwumRepertuarow = [];
 
-    // Generator linków miniatur i obrazów Google Drive z wbudowanym czyszczeniem oraz fallbackiem
-    function getImageUrl(fileId, width = 1000) {
-      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${width}`;
-    }
-
-    function getFallbackUrl(fileId) {
-      return `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
-    }
-
     // Firestore Sync
     async function loadCloudData() {
       if (!window.useFirestore || !window.db) return;
@@ -751,7 +742,7 @@
 
       const cacheBuster = `&_cb=${Date.now()}`;
       const query = `'${FOLDER_ID}' in parents and trashed = false and (mimeType contains 'image/')`;
-      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,webContentLink)&pageSize=500&key=${API_KEY}${cacheBuster}`;
+      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,thumbnailLink)&pageSize=500&key=${API_KEY}${cacheBuster}`;
 
       try {
         const response = await fetch(url, { cache: 'no-store' });
@@ -819,9 +810,11 @@
         return;
       }
 
+      const timestamp = Date.now();
       filtered.forEach(song => {
-        const thumbUrl = getImageUrl(song.id, 400);
-        const fallbackUrl = getFallbackUrl(song.id);
+        // Przywrócono Twój oryginalny, działający sposób adresowania Google Drive
+        const thumbUrl = `https://lh3.googleusercontent.com/d/${song.id}=s400?v=${timestamp}`;
+        const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000?v=${timestamp}`;
 
         const card = document.createElement('div');
         card.className = 'song-card';
@@ -829,8 +822,8 @@
         const inRep = currentRepertuar.some(s => s.id === song.id);
 
         card.innerHTML = `
-          <div class="card-img-wrapper" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${song.id}')">
-            <img src="${thumbUrl}" alt="${song.cleanTitle}" loading="lazy" onerror="this.onerror=null; this.src='${fallbackUrl}';" />
+          <div class="card-img-wrapper" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')">
+            <img src="${thumbUrl}" alt="${song.cleanTitle}" loading="lazy" />
             <div class="card-actions-top">
               <button class="add-rep-btn" onclick="event.stopPropagation(); toggleRepertuar('${song.id}')">
                 ${inRep ? '✓ W zestawie' : '+ Dodaj'}
@@ -838,7 +831,7 @@
               <button class="edit-song-btn" onclick="event.stopPropagation(); openEditModal('${song.id}')">✏️</button>
             </div>
           </div>
-          <div class="song-info" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${song.id}')">
+          <div class="song-info" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')">
             <div class="song-title-center">${song.cleanTitle}</div>
             <div class="song-meta-row">
               <span class="badge-category">${song.category}</span>
@@ -911,17 +904,38 @@
       container.innerHTML = `<div style="text-align:center; padding:30px; color:#737373;">Pobieranie propozycji śpiewów na ${dateStr}...</div>`;
 
       const targetUrl = `https://musicamsacram.pl/propozycje-spiewow/dzien/${dateStr}`;
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+      
+      // Wielostopniowe pobieranie danych (Corsproxy z fallbackiem do AllOrigins)
+      let htmlText = '';
+      try {
+        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
+        if (res.ok) {
+          htmlText = await res.text();
+        }
+      } catch (e) {
+        console.warn("Corsproxy zawiodło, próba przez AllOrigins...", e);
+      }
+
+      if (!htmlText) {
+        try {
+          const res2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+          const data2 = await res2.json();
+          htmlText = data2.contents;
+        } catch (e2) {
+          console.error("Wszystkie proxy zawiodły:", e2);
+        }
+      }
+
+      if (!htmlText) {
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">Nie udało się pobrać danych z serwisu MusicamSacram. Sprawdź połączenie z siecią.</div>`;
+        return;
+      }
 
       try {
-        const res = await fetch(proxyUrl);
-        const data = await res.json();
-
-        if (!data || !data.contents) throw new Error("Brak danych");
-
         const parser = new DOMParser();
-        const doc = parser.parseFromString(data.contents, 'text/html');
+        const doc = parser.parseFromString(htmlText, 'text/html');
 
+        // Pobieranie sekcji oraz tabel
         const tables = doc.querySelectorAll('table');
 
         if (tables.length === 0) {
@@ -929,7 +943,7 @@
           return;
         }
 
-        let html = '';
+        let resultHtml = '';
 
         tables.forEach((table, idx) => {
           let sectionTitle = `Część Mszy #${idx + 1}`;
@@ -942,14 +956,15 @@
             prevElem = prevElem.previousElementSibling;
           }
 
-          html += `<div class="suggestion-group"><div class="suggestion-group-title">${sectionTitle}</div>`;
+          resultHtml += `<div class="suggestion-group"><div class="suggestion-group-title">${sectionTitle}</div>`;
 
-          const rows = table.querySelectorAll('tbody tr');
+          const rows = table.querySelectorAll('tbody tr, tr');
           rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
+            const cells = row.querySelectorAll('td, th');
             if (cells.length > 0) {
               const rawTitle = cells[0].textContent.trim();
               if (rawTitle && !rawTitle.toLowerCase().includes('tytuł')) {
+                // Szukamy w lokalnej bazie
                 const matchedSong = allSongs.find(s => 
                   s.cleanTitle.toLowerCase().includes(rawTitle.toLowerCase()) ||
                   rawTitle.toLowerCase().includes(s.cleanTitle.toLowerCase())
@@ -957,11 +972,11 @@
 
                 const inRep = matchedSong ? currentRepertuar.some(r => r.id === matchedSong.id) : false;
 
-                html += `
+                resultHtml += `
                   <div class="list-item" style="margin-bottom:6px; padding:8px 12px;">
                     <div>
                       <strong style="font-size:0.95rem; color:#fff;">${rawTitle}</strong>
-                      ${matchedSong ? `<div style="font-size:0.75rem; color:#22c55e;">✓ Dostępne w Twojej bazie</div>` : `<div style="font-size:0.75rem; color:#737373;">Brak w bazie nut</div>`}
+                      ${matchedSong ? `<div style="font-size:0.75rem; color:#22c55e;">✓ Dostępne w bazie: <strong>${matchedSong.cleanTitle}</strong></div>` : `<div style="font-size:0.75rem; color:#737373;">Brak w bazie nut</div>`}
                     </div>
                     ${matchedSong ? `
                       <button class="add-rep-btn" onclick="toggleRepertuar('${matchedSong.id}')">
@@ -974,14 +989,14 @@
             }
           });
 
-          html += `</div>`;
+          resultHtml += `</div>`;
         });
 
-        container.innerHTML = html;
+        container.innerHTML = resultHtml;
 
       } catch (err) {
-        console.error("Błąd pobierania MusicamSacram:", err);
-        container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">Nie udało się pobrać propozycji na ten dzień. Sprawdź połączenie internetowe.</div>`;
+        console.error("Błąd parsowania propozycji:", err);
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">Błąd podczas przetwarzania propozycji.</div>`;
       }
     }
 
@@ -1080,10 +1095,12 @@
       }
 
       let html = '';
+      const timestamp = Date.now();
       currentRepertuar.forEach((song, idx) => {
+        const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000?v=${timestamp}`;
         html += `
           <div class="list-item">
-            <div onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${song.id}')" style="cursor:pointer; flex:1;">
+            <div onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')" style="cursor:pointer; flex:1;">
               <strong style="font-size:1rem;">${idx + 1}. ${song.cleanTitle}</strong>
               <div class="song-meta-row" style="justify-content:flex-start; margin-top:4px;">
                 <span class="badge-category">${song.category}</span>
@@ -1208,21 +1225,11 @@
       }
     }
 
-    window.openModal = function(title, category, slide, fileId) {
+    window.openModal = function(title, category, slide, imageUrl) {
       document.getElementById('modalTitle').innerText = title;
       document.getElementById('modalCategory').innerText = category;
       document.getElementById('modalSlide').innerText = slide ? `Slajd #${slide}` : '';
-      
-      const img = document.getElementById('modalImage');
-      const primaryUrl = getImageUrl(fileId, 2000);
-      const fallbackUrl = getFallbackUrl(fileId);
-
-      img.onerror = function() {
-        this.onerror = null;
-        this.src = fallbackUrl;
-      };
-      img.src = primaryUrl;
-
+      document.getElementById('modalImage').src = imageUrl;
       document.getElementById('imageModal').classList.add('active');
     }
 
