@@ -806,10 +806,9 @@
         return;
       }
 
-      const timestamp = Date.now();
       filtered.forEach(song => {
-        const thumbUrl = `https://lh3.googleusercontent.com/d/${song.id}=s400?v=${timestamp}`;
-        const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000?v=${timestamp}`;
+        // Przywrócony Twój działający, czysty adres Google Drive bez parametryzowania
+        const imageUrl = `https://lh3.googleusercontent.com/d/${song.id}`;
 
         const card = document.createElement('div');
         card.className = 'song-card';
@@ -817,8 +816,8 @@
         const inRep = currentRepertuar.some(s => s.id === song.id);
 
         card.innerHTML = `
-          <div class="card-img-wrapper" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')">
-            <img src="${thumbUrl}" alt="${song.cleanTitle}" loading="lazy" />
+          <div class="card-img-wrapper" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${imageUrl}')">
+            <img src="${imageUrl}" alt="${song.cleanTitle}" loading="lazy" />
             <div class="card-actions-top">
               <button class="add-rep-btn" onclick="event.stopPropagation(); toggleRepertuar('${song.id}')">
                 ${inRep ? '✓ W zestawie' : '+ Dodaj'}
@@ -826,7 +825,7 @@
               <button class="edit-song-btn" onclick="event.stopPropagation(); openEditModal('${song.id}')">✏️</button>
             </div>
           </div>
-          <div class="song-info" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')">
+          <div class="song-info" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${imageUrl}')">
             <div class="song-title-center">${song.cleanTitle}</div>
             <div class="song-meta-row">
               <span class="badge-category">${song.category}</span>
@@ -1074,12 +1073,11 @@
       }
 
       let html = '';
-      const timestamp = Date.now();
       currentRepertuar.forEach((song, idx) => {
-        const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000?v=${timestamp}`;
+        const imageUrl = `https://lh3.googleusercontent.com/d/${song.id}`;
         html += `
           <div class="list-item">
-            <div onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')" style="cursor:pointer; flex:1;">
+            <div onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${imageUrl}')" style="cursor:pointer; flex:1;">
               <strong style="font-size:1rem;">${idx + 1}. ${song.cleanTitle}</strong>
               <div class="song-meta-row" style="justify-content:flex-start; margin-top:4px;">
                 <span class="badge-category">${song.category}</span>
