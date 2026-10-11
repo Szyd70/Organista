@@ -11,7 +11,7 @@
   <meta http-equiv="Expires" content="0" />
 
   <!-- PWA Setup -->
-  <link rel="manifest" href="manifest.json?v=8" />
+  <link rel="manifest" href="manifest.json?v=7" />
   <link rel="icon" type="image/svg+xml" href="/icon.svg" />
   <link rel="apple-touch-icon" href="/icon.svg" />
   <meta name="theme-color" content="#0a0a0a" />
@@ -178,9 +178,9 @@
       background-color: #141414;
       color: #a3a3a3;
       border: 1px solid #262626;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 16px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       white-space: nowrap;
       cursor: pointer;
       flex: 1;
@@ -808,7 +808,6 @@
 
       const timestamp = Date.now();
       filtered.forEach(song => {
-        // Przywrócono Twój oryginalny adres Google Drive
         const thumbUrl = `https://lh3.googleusercontent.com/d/${song.id}=s400?v=${timestamp}`;
         const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000?v=${timestamp}`;
 
