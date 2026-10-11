@@ -11,7 +11,7 @@
   <meta http-equiv="Expires" content="0" />
 
   <!-- PWA Setup -->
-  <link rel="manifest" href="manifest.json?v=7" />
+  <link rel="manifest" href="manifest.json?v=8" />
   <link rel="icon" type="image/svg+xml" href="/icon.svg" />
   <link rel="apple-touch-icon" href="/icon.svg" />
   <meta name="theme-color" content="#0a0a0a" />
@@ -165,26 +165,28 @@
       border-color: #d4d4d4;
     }
 
-    .categories-bar {
+    .categories-bar, .date-bar {
       display: flex;
       gap: 6px;
       overflow-x: auto;
       padding-bottom: 4px;
       scrollbar-width: none;
     }
-    .categories-bar::-webkit-scrollbar { display: none; }
+    .categories-bar::-webkit-scrollbar, .date-bar::-webkit-scrollbar { display: none; }
 
-    .cat-btn {
+    .cat-btn, .date-btn {
       background-color: #141414;
       color: #a3a3a3;
       border: 1px solid #262626;
-      padding: 5px 12px;
+      padding: 6px 14px;
       border-radius: 16px;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       white-space: nowrap;
       cursor: pointer;
+      flex: 1;
+      text-align: center;
     }
-    .cat-btn.active {
+    .cat-btn.active, .date-btn.active {
       background-color: #f5f5f5;
       color: #0a0a0a;
       font-weight: 700;
@@ -221,7 +223,7 @@
       margin-bottom: 24px;
     }
     @media(min-width: 600px) {
-      .quick-actions-grid { grid-template-columns: repeat(4, 1fr); }
+      .quick-actions-grid { grid-template-columns: repeat(5, 1fr); }
     }
     .action-card {
       background-color: #141414;
@@ -299,6 +301,7 @@
       padding: 4px 8px;
       font-size: 0.7rem;
       font-weight: 600;
+      cursor: pointer;
     }
     .edit-song-btn {
       display: none;
@@ -475,6 +478,22 @@
       margin-bottom: 16px;
     }
 
+    .suggestion-group {
+      margin-bottom: 16px;
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .suggestion-group-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.9rem;
+      color: #f5f5f5;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #262626;
+      padding-bottom: 4px;
+    }
+
     .status-msg {
       text-align: center;
       padding: 40px 16px;
@@ -509,10 +528,11 @@
       <button class="icon-btn" id="adminAuthBtn" onclick="handleAdminToggle()">🔑 Zaloguj</button>
     </div>
 
-    <!-- Nawigacja Po Podstronach (Strona Główna domyślnie aktywna) -->
+    <!-- Nawigacja Po Podstronach -->
     <div class="nav-tabs">
       <button class="tab-btn active" id="tabHome" onclick="switchView('home')">🏠 Główna</button>
       <button class="tab-btn" id="tabBaza" onclick="switchView('baza')">🎼 Baza</button>
+      <button class="tab-btn" id="tabPropozycje" onclick="switchView('propozycje')">✨ Propozycje</button>
       <button class="tab-btn" id="tabRepertuar" onclick="switchView('repertuar')">📋 Repertuar (<span id="repCount">0</span>)</button>
       <button class="tab-btn" id="tabCzytania" onclick="switchView('czytania')">📖 Czytania</button>
       <button class="tab-btn" id="tabArchiwum" onclick="switchView('archiwum')">📚 Archiwum</button>
@@ -529,7 +549,7 @@
   <main>
     <div id="status" class="status-msg" style="display:none;">Ładowanie bazy i synchronizacja...</div>
 
-    <!-- PODSTRONA 1: STRONA GŁÓWNA (Domyślnie aktywna) -->
+    <!-- PODSTRONA 1: STRONA GŁÓWNA -->
     <div id="viewHome" class="section-view active">
       <div class="dashboard-hero">
         <h2>Laudate Dominum</h2>
@@ -542,6 +562,10 @@
         <div class="action-card" onclick="switchView('baza')">
           <div class="icon">🎼</div>
           <div class="title">Baza Pieśni</div>
+        </div>
+        <div class="action-card" onclick="switchView('propozycje')">
+          <div class="icon">✨</div>
+          <div class="title">Propozycje</div>
         </div>
         <div class="action-card" onclick="switchView('repertuar')">
           <div class="icon">📋</div>
@@ -561,6 +585,15 @@
     <!-- PODSTRONA 2: BAZA PIEŚNI -->
     <div id="viewBaza" class="section-view">
       <div id="songGrid" class="song-grid"></div>
+    </div>
+
+    <!-- PODSTRONA: PROPOZYCJE MUSICAMSACRAM -->
+    <div id="viewPropozycje" class="section-view">
+      <h3 style="font-family:'Cinzel',serif; font-size:1.1rem; margin-bottom:12px;">Propozycje MusicamSacram</h3>
+      <div class="date-bar" id="dateBar"></div>
+      <div id="propozycjeContent" style="margin-top:16px;">
+        <div style="text-align:center; padding:30px; color:#737373;">Wybierz dzień z paska powyżej, aby wczytać propozycje...</div>
+      </div>
     </div>
 
     <!-- PODSTRONA 3: BIEŻĄCY REPERTUAR -->
@@ -638,6 +671,7 @@
     let currentCategory = 'Wszystkie';
     let editingSongId = null;
     let isAdminLoggedIn = false;
+    let selectedSuggestionDate = null;
 
     let customCategories = ['Adwent', 'Boże Narodzenie', 'Wielki Post', 'Wielkanoc', 'Maryjne', 'Ogólne'];
     let songCategoryMap = {};
@@ -719,6 +753,7 @@
         renderCategoriesBar();
         renderSongs();
         updateRepertuarBadge();
+        renderDateBar();
       } catch (err) {
         console.error(`Błąd ładowania pieśni: ${err.message}`);
       }
@@ -773,6 +808,7 @@
 
       const timestamp = Date.now();
       filtered.forEach(song => {
+        // Przywrócono Twój oryginalny adres Google Drive
         const thumbUrl = `https://lh3.googleusercontent.com/d/${song.id}=s400?v=${timestamp}`;
         const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000?v=${timestamp}`;
 
@@ -818,6 +854,130 @@
       currentCategory = cat;
       renderCategoriesBar();
       renderSongs();
+    }
+
+    // Pasek wyboru dat (Dziś, Jutro, Najbliższa Niedziela)
+    function renderDateBar() {
+      const container = document.getElementById('dateBar');
+      if (!container) return;
+
+      const today = new Date();
+      const dToday = new Date(today);
+      
+      const dTomorrow = new Date(today);
+      dTomorrow.setDate(today.getDate() + 1);
+
+      const dSunday = new Date(today);
+      const dayOfWeek = today.getDay(); // 0 = Niedziela
+      const daysUntilSunday = (dayOfWeek === 0) ? 0 : (7 - dayOfWeek);
+      dSunday.setDate(today.getDate() + daysUntilSunday);
+
+      const dates = [
+        { label: 'Dziś', date: dToday },
+        { label: 'Jutro', date: dTomorrow },
+        { label: `Niedziela (${dSunday.getDate()}.${dSunday.getMonth() + 1})`, date: dSunday }
+      ];
+
+      if (!selectedSuggestionDate) {
+        selectedSuggestionDate = dToday.toISOString().split('T')[0];
+      }
+
+      let html = '';
+      dates.forEach(item => {
+        const isoDate = item.date.toISOString().split('T')[0];
+        const isActive = (selectedSuggestionDate === isoDate);
+        html += `<button class="date-btn ${isActive ? 'active' : ''}" onclick="loadSuggestionsForDate('${isoDate}')">${item.label}</button>`;
+      });
+
+      container.innerHTML = html;
+      loadSuggestionsForDate(selectedSuggestionDate);
+    }
+
+    window.loadSuggestionsForDate = async function(dateStr) {
+      selectedSuggestionDate = dateStr;
+      renderDateBar();
+
+      const container = document.getElementById('propozycjeContent');
+      if (!container) return;
+      container.innerHTML = `<div style="text-align:center; padding:30px; color:#737373;">Pobieranie propozycji śpiewów na ${dateStr}...</div>`;
+
+      const targetUrl = `https://musicamsacram.pl/propozycje-spiewow/dzien/${dateStr}`;
+      
+      let htmlText = '';
+      try {
+        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+        const data = await res.json();
+        htmlText = data.contents;
+      } catch (err) {
+        console.error("Błąd pobierania propozycji:", err);
+      }
+
+      if (!htmlText) {
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">Nie udało się pobrać propozycji. Sprawdź połączenie z internetem.</div>`;
+        return;
+      }
+
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        const tables = doc.querySelectorAll('table');
+
+        if (tables.length === 0) {
+          container.innerHTML = `<div style="text-align:center; padding:30px; color:#737373;">Brak propozycji śpiewów na ten dzień w serwisie MusicamSacram.</div>`;
+          return;
+        }
+
+        let resultHtml = '';
+        tables.forEach((table, idx) => {
+          let sectionTitle = `Część Mszy #${idx + 1}`;
+          let prevElem = table.previousElementSibling;
+          while (prevElem) {
+            if (['H2', 'H3', 'H4', 'DIV'].includes(prevElem.tagName) && prevElem.textContent.trim()) {
+              sectionTitle = prevElem.textContent.trim();
+              break;
+            }
+            prevElem = prevElem.previousElementSibling;
+          }
+
+          resultHtml += `<div class="suggestion-group"><div class="suggestion-group-title">${sectionTitle}</div>`;
+
+          const rows = table.querySelectorAll('tbody tr, tr');
+          rows.forEach(row => {
+            const cells = row.querySelectorAll('td, th');
+            if (cells.length > 0) {
+              const rawTitle = cells[0].textContent.trim();
+              if (rawTitle && !rawTitle.toLowerCase().includes('tytuł')) {
+                const matchedSong = allSongs.find(s => 
+                  s.cleanTitle.toLowerCase().includes(rawTitle.toLowerCase()) ||
+                  rawTitle.toLowerCase().includes(s.cleanTitle.toLowerCase())
+                );
+
+                const inRep = matchedSong ? currentRepertuar.some(r => r.id === matchedSong.id) : false;
+
+                resultHtml += `
+                  <div class="list-item" style="margin-bottom:6px; padding:8px 12px;">
+                    <div>
+                      <strong style="font-size:0.95rem; color:#fff;">${rawTitle}</strong>
+                      ${matchedSong ? `<div style="font-size:0.75rem; color:#22c55e;">✓ W bazie: <strong>${matchedSong.cleanTitle}</strong></div>` : `<div style="font-size:0.75rem; color:#737373;">Brak w bazie nut</div>`}
+                    </div>
+                    ${matchedSong ? `
+                      <button class="add-rep-btn" onclick="toggleRepertuar('${matchedSong.id}')">
+                        ${inRep ? '✓ W zestawie' : '+ Dodaj'}
+                      </button>
+                    ` : ''}
+                  </div>
+                `;
+              }
+            }
+          });
+          resultHtml += `</div>`;
+        });
+
+        container.innerHTML = resultHtml;
+      } catch (err) {
+        console.error("Błąd parsowania:", err);
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">Błąd parsowania strony propozycji.</div>`;
+      }
     }
 
     // EDYCJA PIEŚNI (TYLKO DLA ZALOGOWANEGO ADMINA)
@@ -898,6 +1058,7 @@
       updateRepertuarBadge();
       renderSongs();
       renderRepertuarList();
+      if (selectedSuggestionDate) loadSuggestionsForDate(selectedSuggestionDate);
     }
 
     function updateRepertuarBadge() {
@@ -1019,6 +1180,12 @@
         document.getElementById('viewBaza').classList.add('active');
         document.getElementById('tabBaza').classList.add('active');
         document.getElementById('bazaHeaderControls').style.display = 'block';
+      }
+      if (viewName === 'propozycje') {
+        document.getElementById('viewPropozycje').classList.add('active');
+        document.getElementById('tabPropozycje').classList.add('active');
+        document.getElementById('bazaHeaderControls').style.display = 'none';
+        renderDateBar();
       }
       if (viewName === 'repertuar') {
         document.getElementById('viewRepertuar').classList.add('active');
