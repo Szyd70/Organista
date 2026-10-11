@@ -784,7 +784,8 @@
         id: file.id,
         cleanTitle: rawName,
         slideNumber: slideNum,
-        category: category
+        category: category,
+        thumbnailLink: file.thumbnailLink || `https://lh3.googleusercontent.com/d/${file.id}`
       };
     }
 
@@ -807,8 +808,8 @@
       }
 
       filtered.forEach(song => {
-        // Przywrócony Twój działający, czysty adres Google Drive bez parametryzowania
-        const imageUrl = `https://lh3.googleusercontent.com/d/${song.id}`;
+        const thumbUrl = song.thumbnailLink;
+        const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}`;
 
         const card = document.createElement('div');
         card.className = 'song-card';
@@ -816,8 +817,8 @@
         const inRep = currentRepertuar.some(s => s.id === song.id);
 
         card.innerHTML = `
-          <div class="card-img-wrapper" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${imageUrl}')">
-            <img src="${imageUrl}" alt="${song.cleanTitle}" loading="lazy" />
+          <div class="card-img-wrapper" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')">
+            <img src="${thumbUrl}" alt="${song.cleanTitle}" loading="lazy" />
             <div class="card-actions-top">
               <button class="add-rep-btn" onclick="event.stopPropagation(); toggleRepertuar('${song.id}')">
                 ${inRep ? '✓ W zestawie' : '+ Dodaj'}
@@ -825,7 +826,7 @@
               <button class="edit-song-btn" onclick="event.stopPropagation(); openEditModal('${song.id}')">✏️</button>
             </div>
           </div>
-          <div class="song-info" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${imageUrl}')">
+          <div class="song-info" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')">
             <div class="song-title-center">${song.cleanTitle}</div>
             <div class="song-meta-row">
               <span class="badge-category">${song.category}</span>
