@@ -494,6 +494,23 @@
       padding-bottom: 4px;
     }
 
+    /* Styl dla dwuliniowych propozycji i zmienionej czcionki uzasadnienia */
+    .suggestion-title {
+      font-size: 0.95rem;
+      color: #ffffff;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .suggestion-reason {
+      font-size: 0.78rem;
+      color: #999999;
+      font-style: italic;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      display: block;
+      line-height: 1.3;
+    }
+
     .status-msg {
       text-align: center;
       padding: 40px 16px;
@@ -738,7 +755,7 @@
 
       const cacheBuster = `&_cb=${Date.now()}`;
       const query = `'${FOLDER_ID}' in parents and trashed = false and (mimeType contains 'image/')`;
-      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,thumbnailLink)&pageSize=500&key=${API_KEY}${cacheBuster}`;
+      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType)&pageSize=500&key=${API_KEY}${cacheBuster}`;
 
       try {
         const response = await fetch(url, { cache: 'no-store' });
@@ -784,8 +801,7 @@
         id: file.id,
         cleanTitle: rawName,
         slideNumber: slideNum,
-        category: category,
-        thumbnailLink: file.thumbnailLink || `https://lh3.googleusercontent.com/d/${file.id}`
+        category: category
       };
     }
 
@@ -808,7 +824,8 @@
       }
 
       filtered.forEach(song => {
-        const thumbUrl = song.thumbnailLink;
+        // Niezawodny link do miniatury/obrazu Google Drive z parametrem skalowania
+        const imageUrl = `https://lh3.googleusercontent.com/d/${song.id}=s400`;
         const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}`;
 
         const card = document.createElement('div');
@@ -818,7 +835,7 @@
 
         card.innerHTML = `
           <div class="card-img-wrapper" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')">
-            <img src="${thumbUrl}" alt="${song.cleanTitle}" loading="lazy" />
+            <img src="${imageUrl}" alt="${song.cleanTitle}" loading="lazy" />
             <div class="card-actions-top">
               <button class="add-rep-btn" onclick="event.stopPropagation(); toggleRepertuar('${song.id}')">
                 ${inRep ? '✓ W zestawie' : '+ Dodaj'}
@@ -944,20 +961,37 @@
           rows.forEach(row => {
             const cells = row.querySelectorAll('td, th');
             if (cells.length > 0) {
-              const rawTitle = cells[0].textContent.trim();
-              if (rawTitle && !rawTitle.toLowerCase().includes('tytuł')) {
+              const fullCellText = cells[0].textContent.trim();
+              if (fullCellText && !fullCellText.toLowerCase().includes('tytuł')) {
+                
+                // Inteligentne rozdzielenie tytułu od uzasadnienia decyzji (np. "W nawiązaniu do..." lub "Propozycja organowa...")
+                let mainTitle = fullCellText;
+                let reason = '';
+
+                // Przykładowe frazy kluczowe rozpoczynające uzasadnienie
+                const splitKeywords = ['W nawiązaniu', 'Propozycja organowa', 'Antyfona', 'Śpiew'];
+                for (let kw of ['W nawiązaniu do', 'Propozycja organowa', 'poziom trudności:']); {
+                  const idxMatch = fullCellText.indexOf(kw);
+                  if (idxMatch > 3) {
+                    mainTitle = fullCellText.substring(0, idxMatch).trim();
+                    reason = fullCellText.substring(idxMatch).trim();
+                    break;
+                  }
+                }
+
                 const matchedSong = allSongs.find(s => 
-                  s.cleanTitle.toLowerCase().includes(rawTitle.toLowerCase()) ||
-                  rawTitle.toLowerCase().includes(s.cleanTitle.toLowerCase())
+                  s.cleanTitle.toLowerCase().includes(mainTitle.toLowerCase()) ||
+                  mainTitle.toLowerCase().includes(s.cleanTitle.toLowerCase())
                 );
 
                 const inRep = matchedSong ? currentRepertuar.some(r => r.id === matchedSong.id) : false;
 
                 resultHtml += `
-                  <div class="list-item" style="margin-bottom:6px; padding:8px 12px;">
-                    <div>
-                      <strong style="font-size:0.95rem; color:#fff;">${rawTitle}</strong>
-                      ${matchedSong ? `<div style="font-size:0.75rem; color:#22c55e;">✓ W bazie: <strong>${matchedSong.cleanTitle}</strong></div>` : `<div style="font-size:0.75rem; color:#737373;">Brak w bazie nut</div>`}
+                  <div class="list-item" style="margin-bottom:6px; padding:10px 12px;">
+                    <div style="flex:1; padding-right:8px;">
+                      <span class="suggestion-title">${mainTitle}</span>
+                      ${reason ? `<span class="suggestion-reason">${reason}</span>` : ''}
+                      ${matchedSong ? `<div style="font-size:0.75rem; color:#22c55e; margin-top:4px;">✓ W bazie: <strong>${matchedSong.cleanTitle}</strong></div>` : `<div style="font-size:0.72rem; color:#737373; margin-top:2px;">Brak w bazie nut</div>`}
                     </div>
                     ${matchedSong ? `
                       <button class="add-rep-btn" onclick="toggleRepertuar('${matchedSong.id}')">
