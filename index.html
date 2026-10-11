@@ -165,16 +165,41 @@
       border-color: #d4d4d4;
     }
 
-    .categories-bar, .date-bar {
+    .categories-bar {
       display: flex;
       gap: 6px;
       overflow-x: auto;
       padding-bottom: 4px;
       scrollbar-width: none;
     }
-    .categories-bar::-webkit-scrollbar, .date-bar::-webkit-scrollbar { display: none; }
+    .categories-bar::-webkit-scrollbar { display: none; }
 
-    .cat-btn, .date-btn {
+    .cat-btn {
+      background-color: #141414;
+      color: #a3a3a3;
+      border: 1px solid #262626;
+      padding: 5px 12px;
+      border-radius: 16px;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .cat-btn.active {
+      background-color: #f5f5f5;
+      color: #0a0a0a;
+      font-weight: 700;
+    }
+
+    /* Style dla pasków i propozycji */
+    .date-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .date-bar::-webkit-scrollbar { display: none; }
+    .date-btn {
       background-color: #141414;
       color: #a3a3a3;
       border: 1px solid #262626;
@@ -186,10 +211,40 @@
       flex: 1;
       text-align: center;
     }
-    .cat-btn.active, .date-btn.active {
+    .date-btn.active {
       background-color: #f5f5f5;
       color: #0a0a0a;
       font-weight: 700;
+    }
+    .suggestion-group {
+      margin-bottom: 16px;
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .suggestion-group-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.9rem;
+      color: #f5f5f5;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #262626;
+      padding-bottom: 4px;
+    }
+    .suggestion-title {
+      font-size: 0.95rem;
+      color: #ffffff;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .suggestion-reason {
+      font-size: 0.78rem;
+      color: #999999;
+      font-style: italic;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      display: block;
+      line-height: 1.3;
     }
 
     .section-view { display: none; }
@@ -301,7 +356,6 @@
       padding: 4px 8px;
       font-size: 0.7rem;
       font-weight: 600;
-      cursor: pointer;
     }
     .edit-song-btn {
       display: none;
@@ -478,39 +532,6 @@
       margin-bottom: 16px;
     }
 
-    .suggestion-group {
-      margin-bottom: 16px;
-      background: #141414;
-      border: 1px solid #262626;
-      border-radius: 8px;
-      padding: 12px;
-    }
-    .suggestion-group-title {
-      font-family: 'Cinzel', serif;
-      font-size: 0.9rem;
-      color: #f5f5f5;
-      margin-bottom: 8px;
-      border-bottom: 1px solid #262626;
-      padding-bottom: 4px;
-    }
-
-    /* Styl dla dwuliniowych propozycji i zmienionej czcionki uzasadnienia */
-    .suggestion-title {
-      font-size: 0.95rem;
-      color: #ffffff;
-      font-weight: 700;
-      display: block;
-      margin-bottom: 4px;
-    }
-    .suggestion-reason {
-      font-size: 0.78rem;
-      color: #999999;
-      font-style: italic;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      display: block;
-      line-height: 1.3;
-    }
-
     .status-msg {
       text-align: center;
       padding: 40px 16px;
@@ -545,7 +566,7 @@
       <button class="icon-btn" id="adminAuthBtn" onclick="handleAdminToggle()">🔑 Zaloguj</button>
     </div>
 
-    <!-- Nawigacja Po Podstronach -->
+    <!-- Nawigacja Po Podstronach (Strona Główna domyślnie aktywna) -->
     <div class="nav-tabs">
       <button class="tab-btn active" id="tabHome" onclick="switchView('home')">🏠 Główna</button>
       <button class="tab-btn" id="tabBaza" onclick="switchView('baza')">🎼 Baza</button>
@@ -566,7 +587,7 @@
   <main>
     <div id="status" class="status-msg" style="display:none;">Ładowanie bazy i synchronizacja...</div>
 
-    <!-- PODSTRONA 1: STRONA GŁÓWNA -->
+    <!-- PODSTRONA 1: STRONA GŁÓWNA (Domyślnie aktywna) -->
     <div id="viewHome" class="section-view active">
       <div class="dashboard-hero">
         <h2>Laudate Dominum</h2>
@@ -755,7 +776,7 @@
 
       const cacheBuster = `&_cb=${Date.now()}`;
       const query = `'${FOLDER_ID}' in parents and trashed = false and (mimeType contains 'image/')`;
-      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType)&pageSize=500&key=${API_KEY}${cacheBuster}`;
+      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,thumbnailLink)&pageSize=500&key=${API_KEY}${cacheBuster}`;
 
       try {
         const response = await fetch(url, { cache: 'no-store' });
@@ -823,10 +844,10 @@
         return;
       }
 
+      const timestamp = Date.now();
       filtered.forEach(song => {
-        // Niezawodny link do miniatury/obrazu Google Drive z parametrem skalowania
-        const imageUrl = `https://lh3.googleusercontent.com/d/${song.id}=s400`;
-        const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}`;
+        const thumbUrl = `https://lh3.googleusercontent.com/d/${song.id}=s400?v=${timestamp}`;
+        const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000?v=${timestamp}`;
 
         const card = document.createElement('div');
         card.className = 'song-card';
@@ -835,7 +856,7 @@
 
         card.innerHTML = `
           <div class="card-img-wrapper" onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')">
-            <img src="${imageUrl}" alt="${song.cleanTitle}" loading="lazy" />
+            <img src="${thumbUrl}" alt="${song.cleanTitle}" loading="lazy" />
             <div class="card-actions-top">
               <button class="add-rep-btn" onclick="event.stopPropagation(); toggleRepertuar('${song.id}')">
                 ${inRep ? '✓ W zestawie' : '+ Dodaj'}
@@ -872,7 +893,7 @@
       renderSongs();
     }
 
-    // Pasek wyboru dat (Dziś, Jutro, Najbliższa Niedziela)
+    // Pasek wyboru dat i obsługa propozycji (MusicamSacram)
     function renderDateBar() {
       const container = document.getElementById('dateBar');
       if (!container) return;
@@ -963,16 +984,12 @@
             if (cells.length > 0) {
               const fullCellText = cells[0].textContent.trim();
               if (fullCellText && !fullCellText.toLowerCase().includes('tytuł')) {
-                
-                // Inteligentne rozdzielenie tytułu od uzasadnienia decyzji (np. "W nawiązaniu do..." lub "Propozycja organowa...")
                 let mainTitle = fullCellText;
                 let reason = '';
 
-                // Przykładowe frazy kluczowe rozpoczynające uzasadnienie
-                const splitKeywords = ['W nawiązaniu', 'Propozycja organowa', 'Antyfona', 'Śpiew'];
-                for (let kw of ['W nawiązaniu do', 'Propozycja organowa', 'poziom trudności:']); {
+                for (let kw of ['W nawiązaniu do', 'Propozycja organowa', 'poziom trudności:', 'Antyfona', 'Śpiew']) {
                   const idxMatch = fullCellText.indexOf(kw);
-                  if (idxMatch > 3) {
+                  if (idxMatch > 2) {
                     mainTitle = fullCellText.substring(0, idxMatch).trim();
                     reason = fullCellText.substring(idxMatch).trim();
                     break;
@@ -1108,11 +1125,12 @@
       }
 
       let html = '';
+      const timestamp = Date.now();
       currentRepertuar.forEach((song, idx) => {
-        const imageUrl = `https://lh3.googleusercontent.com/d/${song.id}`;
+        const fullUrl = `https://lh3.googleusercontent.com/d/${song.id}=s2000?v=${timestamp}`;
         html += `
           <div class="list-item">
-            <div onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${imageUrl}')" style="cursor:pointer; flex:1;">
+            <div onclick="openModal('${song.cleanTitle.replace(/'/g, "\\'")}', '${song.category}', '${song.slideNumber || ''}', '${fullUrl}')" style="cursor:pointer; flex:1;">
               <strong style="font-size:1rem;">${idx + 1}. ${song.cleanTitle}</strong>
               <div class="song-meta-row" style="justify-content:flex-start; margin-top:4px;">
                 <span class="badge-category">${song.category}</span>
